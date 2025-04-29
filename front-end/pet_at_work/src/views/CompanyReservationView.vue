@@ -2,7 +2,7 @@
   <div class="view-container">
     <div class="company-reservation">
       <div v-if="loading" class="loading">
-        Chargement...
+        Loading...
       </div>
       
       <div v-else-if="error" class="error">
@@ -11,7 +11,7 @@
       
       <div v-else-if="company" class="reservation-container">
         <div class="back-link">
-          <router-link to="/petsitter">&larr; Retour à la liste des entreprises</router-link>
+          <router-link to="/petsitter">&larr; Back to the list of companies</router-link>
         </div>
         
         <div class="company-profile">
@@ -25,37 +25,37 @@
               <h2>Adresse</h2>
               <p>{{ company.address }}</p>
               
-              <h2>Capacité d'accueil</h2>
-              <p>{{ company.capacity }} animaux</p>
+              <h2>Capacity</h2>
+              <p>{{ company.capacity }} pets</p>
             </div>
           </div>
         </div>
         
         <div class="reservation-section">
-          <h2>Réserver auprès de cette entreprise</h2>
+          <h2>Book with this company</h2>
           <form @submit.prevent="submitReservation" class="reservation-form">
             <div class="form-group">
-              <label for="service-type">Type de service souhaité</label>
+              <label for="service-type">Type of service desired</label>
               <select id="service-type" v-model="reservation.serviceType" required>
-                <option disabled value="">Choisissez un type de service</option>
-                <option value="formation">Formation spécialisée</option>
-                <option value="consultation">Consultation professionnelle</option>
-                <option value="collaboration">Collaboration pour garde d'animaux</option>
+                <option disabled value="">Choose a type of service</option>
+                <option value="formation">Specialist training</option>
+                <option value="consultation">Professional consultation</option>
+                <option value="collaboration">Collaboration for pet sitting</option>
               </select>
             </div>
             
             <div class="form-group">
-              <label for="start-date">Date de début</label>
+              <label for="start-date">Start date</label>
               <input type="date" id="start-date" v-model="reservation.startDate" required min="today" />
             </div>
             
             <div class="form-group">
-              <label for="end-date">Date de fin</label>
+              <label for="end-date">End date</label>
               <input type="date" id="end-date" v-model="reservation.endDate" required :min="reservation.startDate" />
             </div>
             
             <div class="form-group">
-              <label for="details">Détails de la demande</label>
+              <label for="details">Request details</label>
               <textarea id="details" v-model="reservation.details" rows="4" placeholder="Précisez vos besoins, vos attentes et toute information pertinente pour votre réservation."></textarea>
             </div>
             
@@ -65,7 +65,7 @@
           </form>
           
           <div v-if="reservationSuccess" class="success-message">
-            Votre demande de réservation a été envoyée avec succès! L'entreprise vous contactera bientôt.
+            Your booking request has been sent successfully! The company will contact you shortly.
           </div>
           
           <div v-if="reservationError" class="error-message">

@@ -4,25 +4,25 @@
       <div class="detail-card">
         <h1>{{ company.name }}</h1>
         <div class="info-section">
-          <p><strong>Adresse:</strong> {{ company.address }}</p>
-          <p><strong>Capacité d'accueil:</strong> {{ company.capacity }} animaux</p>
+          <p><strong>Address:</strong> {{ company.address }}</p>
+          <p><strong>Capacity:</strong> {{ company.capacity }} animaux</p>
           <p><strong>Contact:</strong> {{ company.email }}</p>
         </div>
         
         <!-- Reservation Section -->
         <div class="reservation-section">
-          <h2>Réserver une place pour votre animal</h2>
+          <h2>Book a place for your pet</h2>
           
           <div v-if="userAnimals.length === 0" class="no-animals">
-            <p>Vous n'avez pas encore enregistré d'animaux.</p>
-            <router-link to="/profile/animals" class="btn-add-animal">Ajouter un animal</router-link>
+            <p>You have not yet registered any animals.</p>
+            <router-link to="/profile/animals" class="btn-add-animal">Add a pet</router-link>
           </div>
           
           <form v-else @submit.prevent="submitReservation" class="reservation-form">
             <div class="form-group">
-              <label for="animal">Sélectionnez votre animal:</label>
+              <label for="animal">Select your pet:</label>
               <select id="animal" v-model="reservation.animalId" required>
-                <option value="" disabled>Choisir un animal</option>
+                <option value="" disabled>Choose a pet</option>
                 <option v-for="animal in userAnimals" :key="animal.id" :value="animal.id">
                   {{ animal.name }} ({{ animal.species }})
                 </option>
@@ -30,17 +30,17 @@
             </div>
             
             <div class="form-group">
-              <label for="start-date">Date de début:</label>
+              <label for="start-date">Start date:</label>
               <input type="date" id="start-date" v-model="reservation.startDate" required :min="today">
             </div>
             
             <div class="form-group">
-              <label for="end-date">Date de fin:</label>
+              <label for="end-date">End date:</label>
               <input type="date" id="end-date" v-model="reservation.endDate" required :min="reservation.startDate">
             </div>
             
             <div class="form-group">
-              <label for="notes">Notes spéciales (allergies, médicaments, etc.):</label>
+              <label for="notes">Specifications (allergies, medication, etc.):</label>
               <textarea id="notes" v-model="reservation.notes" rows="3"></textarea>
             </div>
             
@@ -56,7 +56,7 @@
       </div>
     </div>
     <div v-else class="loading">
-      Chargement...
+      Loading...
     </div>
   </div>
 </template>

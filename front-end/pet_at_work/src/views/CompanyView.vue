@@ -5,20 +5,20 @@
       
       <!-- Navigation -->
       <div class="profile-nav">
-        <button class="profile-btn" @click="goToProfile">Voir mon profil</button>
+        <button class="profile-btn" @click="goToProfile">See my profile</button>
       </div>
 
       <!-- Information de la compagnie -->
       <div class="company-info-section" v-if="currentCompany">
-        <h2>Mon entreprise</h2>
+        <h2>My company</h2>
         <div class="company-info-card">
           <div class="company-details">
             <h3>{{ currentCompany.name }}</h3>
-            <p><strong>Adresse:</strong> {{ currentCompany.address || 'Non spécifiée' }}</p>
+            <p><strong>Address:</strong> {{ currentCompany.address || 'Non spécifiée' }}</p>
             <p class="capacity-info">
-              <strong>Capacité:</strong> {{ currentCompany.capacity || 0 }} animaux
+              <strong>Capacity:</strong> {{ currentCompany.capacity || 0 }} pets
               <span v-if="currentCapacityUsed > 0" class="capacity-used">
-                ({{ currentCapacityUsed }} en cours)
+                ({{ currentCapacityUsed }} in progress)
               </span>
             </p>
             <div class="capacity-bar-container">
@@ -26,24 +26,24 @@
             </div>
           </div>
           <div class="company-actions">
-            <button class="edit-profile-btn" @click="openProfileModal">Modifier mon profil</button>
+            <button class="edit-profile-btn" @click="openProfileModal">Modify my profile</button>
           </div>
         </div>
       </div>
 
       <!-- Réservations en attente -->
       <div class="bookings-section" v-if="pendingBookings.length > 0">
-        <h2>Réservations en attente</h2>
+        <h2>Pending booking</h2>
         <div class="bookings-list">
           <div v-for="booking in pendingBookings" 
                :key="booking.id" 
                class="booking-card pending">
             <div class="booking-info">
-              <h3>Réservation de {{ getPetSitterName(booking.petsitter) }}</h3>
-              <p><strong>Type de service:</strong> {{ getServiceLabel(booking.service_type) }}</p>
+              <h3>Booking of {{ getPetSitterName(booking.petsitter) }}</h3>
+              <p><strong>Type of service:</strong> {{ getServiceLabel(booking.service_type) }}</p>
               <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
-              <p><strong>Détails:</strong> {{ booking.details || 'Aucun détail fourni' }}</p>
-              <p class="status"><strong>Statut:</strong> En attente</p>
+              <p><strong>Details:</strong> {{ booking.details || 'Aucun détail fourni' }}</p>
+              <p class="status"><strong>Status:</strong> On hold</p>
               
               <div class="booking-actions">
                 <button 
@@ -67,23 +67,23 @@
         </div>
       </div>
       <div v-else-if="!loading" class="empty-message">
-        <p>Aucune réservation en attente.</p>
+        <p>No bookings pending</p>
       </div>
 
       <!-- Toutes les réservations -->
       <div class="bookings-section" v-if="bookings.length > 0">
-        <h2>Historique des réservations</h2>
+        <h2>Booking history</h2>
         <div class="bookings-list">
           <div v-for="booking in bookings" 
                :key="booking.id" 
                class="booking-card"
                :class="booking.status">
             <div class="booking-info">
-              <h3>Réservation de {{ getPetSitterName(booking.petsitter) }}</h3>
-              <p><strong>Type de service:</strong> {{ getServiceLabel(booking.service_type) }}</p>
+              <h3>Booking of {{ getPetSitterName(booking.petsitter) }}</h3>
+              <p><strong>Type of service:</strong> {{ getServiceLabel(booking.service_type) }}</p>
               <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
-              <p><strong>Détails:</strong> {{ booking.details || 'Aucun détail fourni' }}</p>
-              <p class="status"><strong>Statut:</strong> {{ getStatusLabel(booking.status) }}</p>
+              <p><strong>Details:</strong> {{ booking.details || 'Aucun détail fourni' }}</p>
+              <p class="status"><strong>Status:</strong> {{ getStatusLabel(booking.status) }}</p>
               
               <div class="booking-actions" v-if="booking.status === 'accepted'">
                 <!-- Le bouton "Marquer comme terminée" a été supprimé selon la demande -->
@@ -93,23 +93,23 @@
         </div>
       </div>
       <div v-else-if="!loading && pendingBookings.length === 0" class="empty-message">
-        <p>Aucune réservation à afficher.</p>
+        <p>No bookings to display</p>
       </div>
 
       <!-- Loading indicator -->
       <div v-if="loading" class="loading">
-        <p>Chargement des données...</p>
+        <p>Loading data...</p>
       </div>
     </div>
     
     <!-- Modal de modification du profil -->
     <div v-if="showProfileModal" class="modal-backdrop" @click="showProfileModal = false">
       <div class="modal-content" @click.stop>
-        <h3>Modifier mon profil d'entreprise</h3>
+        <h3>Modify my company profile</h3>
         
         <form @submit.prevent="updateCompanyProfile" class="profile-form">
           <div class="form-group">
-            <label for="name">Nom de l'entreprise</label>
+            <label for="name">Name of the company</label>
             <input type="text" id="name" v-model="profileForm.name" required>
           </div>
           
@@ -119,7 +119,7 @@
           </div>
           
           <div class="form-group">
-            <label for="address">Adresse</label>
+            <label for="address">Address</label>
             <input type="text" id="address" v-model="profileForm.address">
           </div>
           

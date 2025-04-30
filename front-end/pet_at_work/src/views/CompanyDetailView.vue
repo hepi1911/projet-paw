@@ -45,7 +45,7 @@
             </div>
             
             <button type="submit" class="btn-reserve" :disabled="isSubmitting">
-              {{ isSubmitting ? 'Réservation en cours...' : 'Réserver' }}
+              {{ isSubmitting ? 'Booking in progress...' : 'Book' }}
             </button>
             
             <div v-if="reservationMessage" :class="['message', reservationStatus]">
@@ -93,7 +93,7 @@ onMounted(async () => {
     const currentUserId = userData.user_id;
     
     if (!currentUserId) {
-      console.error('Utilisateur non connecté ou ID non disponible');
+      console.error('User not logged in or ID not available');
       router.push('/login');
       return;
     }
@@ -103,13 +103,13 @@ onMounted(async () => {
     
     // Récupérer UNIQUEMENT les animaux appartenant au propriétaire connecté
     userAnimals.value = await apiService.getAnimalsByOwner(currentUserId);
-    console.log('Animaux de l\'utilisateur:', userAnimals.value);
+    console.log('Pets of the user:', userAnimals.value);
     
     if (userAnimals.value.length === 0) {
-      console.log('L\'utilisateur n\'a pas encore d\'animaux enregistrés');
+      console.log('The user does not yet have a registered pet');
     }
   } catch (error) {
-    console.error('Erreur lors du chargement des données:', error);
+    console.error('Error during data loading:', error);
   }
 });
 
@@ -121,7 +121,7 @@ const submitReservation = async () => {
     // Vérifier que l'utilisateur est bien connecté
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
     if (!userData.user_id) {
-      reservationMessage.value = 'Vous devez être connecté pour effectuer une réservation.';
+      reservationMessage.value = 'You must be logged in to make a booking.';
       reservationStatus.value = 'error';
       router.push('/login');
       return;
@@ -138,7 +138,7 @@ const submitReservation = async () => {
     // Utiliser apiService au lieu d'appeler directement l'API
     await apiService.createBooking(bookingData);
     
-    reservationMessage.value = 'Réservation effectuée avec succès! Vous recevrez une confirmation par email.';
+    reservationMessage.value = 'Successful booking! You will receive confirmation by email.';
     reservationStatus.value = 'success';
     
     // Réinitialiser le formulaire
@@ -155,8 +155,8 @@ const submitReservation = async () => {
     }, 2000);
     
   } catch (error) {
-    console.error('Erreur lors de la réservation:', error);
-    reservationMessage.value = 'Erreur lors de la réservation. Veuillez réessayer plus tard.';
+    console.error('Booking error:', error);
+    reservationMessage.value = 'Booking error. Please try again later.';
     reservationStatus.value = 'error';
   } finally {
     isSubmitting.value = false;

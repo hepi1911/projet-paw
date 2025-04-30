@@ -1,7 +1,7 @@
 <template>
   <div class="view-container">
     <div class="forgot-password-container">
-      <h1>Récupération du mot de passe</h1>
+      <h1>Password recovery</h1>
 
       <!-- Étape 1: Demande d'email -->
       <form v-if="step === 'email'" @submit.prevent="handleEmailSubmit" class="forgot-form">
@@ -24,19 +24,19 @@
         </button>
 
         <p class="login-link">
-          Vous vous souvenez de votre mot de passe? 
-          <router-link to="/login">Se connecter</router-link>
+          Remember your password? 
+          <router-link to="/login">Login</router-link>
         </p>
       </form>
 
       <!-- Étape 2: Vérification du code -->
       <form v-if="step === 'verify'" @submit.prevent="handleCodeSubmit" class="forgot-form">
         <p class="info-message">
-          Un code de vérification a été envoyé à {{ email }}
+          A verification code has been sent to {{ email }}
         </p>
 
         <div class="form-group">
-          <label for="code">Code de vérification:</label>
+          <label for="code">Verification code:</label>
           <input 
             type="text" 
             id="code" 
@@ -56,14 +56,14 @@
         </button>
 
         <button type="button" class="resend-button" @click="handleResendCode" :disabled="loading">
-          Renvoyer le code
+          Resend code
         </button>
       </form>
 
       <!-- Étape 3: Nouveau mot de passe -->
       <form v-if="step === 'reset'" @submit.prevent="handlePasswordReset" class="forgot-form">
         <div class="form-group">
-          <label for="newPassword">Nouveau mot de passe:</label>
+          <label for="newPassword">New password:</label>
           <input 
             type="password" 
             id="newPassword" 
@@ -72,15 +72,15 @@
             @input="validatePassword"
             placeholder="Nouveau mot de passe">
           <ul class="password-requirements" :class="{ valid: passwordValid }">
-            <li :class="{ met: passwordLength }">Au moins 8 caractères</li>
-            <li :class="{ met: hasUpperCase }">Au moins une majuscule</li>
-            <li :class="{ met: hasLowerCase }">Au moins une minuscule</li>
-            <li :class="{ met: hasNumber }">Au moins un chiffre</li>
+            <li :class="{ met: passwordLength }">At least 8 characters</li>
+            <li :class="{ met: hasUpperCase }">At least one upper case letter</li>
+            <li :class="{ met: hasLowerCase }">At least one lower case letter</li>
+            <li :class="{ met: hasNumber }">At least one digit</li>
           </ul>
         </div>
 
         <div class="form-group">
-          <label for="confirmPassword">Confirmer le mot de passe:</label>
+          <label for="confirmPassword">Confirm password:</label>
           <input 
             type="password" 
             id="confirmPassword" 

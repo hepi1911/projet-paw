@@ -3,30 +3,30 @@
     <!-- Indicateur de chargement -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-spinner"></div>
-      <p>Chargement des données...</p>
+      <p>Loading data...</p>
     </div>
     
     <div v-else class="pet-sitter-dashboard">
-      <h1>Espace Pet Sitter</h1>
+      <h1>Pet Sitter space</h1>
       
       <!-- Navigation -->
       <div class="profile-nav">
-        <button class="profile-btn" @click="goToProfile">Voir mon profil</button>
+        <button class="profile-btn" @click="goToProfile">See my profile</button>
       </div>
 
       <!-- Section Mon Profil -->
       <div class="profile-section">
-        <h2>Mon Profil</h2>
+        <h2>My Profile</h2>
         <div class="profile-card">
           <div class="profile-info" v-if="currentUser">
             <h3>{{ currentUser.name }}</h3>
             <p><strong>Email:</strong> {{ currentUser.email }}</p>
-            <p v-if="currentUser.address"><strong>Adresse:</strong> {{ currentUser.address }}</p>
-            <p v-if="currentUser.experience"><strong>Expérience:</strong> {{ currentUser.experience }}</p>
-            <p v-if="currentUser.capacity !== null"><strong>Capacité:</strong> {{ currentUser.capacity }} animaux</p>
+            <p v-if="currentUser.address"><strong>Address:</strong> {{ currentUser.address }}</p>
+            <p v-if="currentUser.experience"><strong>Experience:</strong> {{ currentUser.experience }}</p>
+            <p v-if="currentUser.capacity !== null"><strong>Capacity:</strong> {{ currentUser.capacity }} pets</p>
           </div>
           <div class="profile-actions">
-            <button class="edit-profile-btn" @click="openProfileModal">Modifier mon profil</button>
+            <button class="edit-profile-btn" @click="openProfileModal">Modify my profile</button>
           </div>
         </div>
       </div>
@@ -34,21 +34,21 @@
       <!-- Message d'erreur -->
       <div v-if="error" class="error-message">
         <p>{{ error }}</p>
-        <button @click="loadData" class="retry-btn">Réessayer</button>
+        <button @click="loadData" class="retry-btn">Try again</button>
       </div>
 
       <!-- Section Réservations en attente -->
       <div v-if="!error && pendingBookings.length > 0" class="pending-bookings-section">
-        <h2>Réservations en attente</h2>
+        <h2>Pending bookings</h2>
         <div class="bookings-list">
           <div v-for="booking in pendingBookings" 
               :key="booking.id" 
               class="booking-card pending">
             <div class="booking-info">
               <h3>{{ getAnimalName(booking.animal) }}</h3>
-              <p><strong>Propriétaire:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
+              <p><strong>Owner:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
               <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
-              <p class="status"><strong>Statut:</strong> En attente</p>
+              <p class="status"><strong>Status:</strong> On hold</p>
               
               <div class="booking-actions">
                 <button class="accept-btn" @click="updateBookingStatus(booking.id, 'accepted')" :disabled="isUpdating">
@@ -63,12 +63,12 @@
         </div>
       </div>
       <div v-else-if="!error && bookings.length === 0" class="empty-message">
-        <p>Aucune réservation en attente pour le moment.</p>
+        <p>No bookings pending at the moment.</p>
       </div>
 
       <!-- Section Toutes les Réservations -->
       <div v-if="!error && bookings.length > 0" class="bookings-section">
-        <h2>Toutes mes réservations</h2>
+        <h2>All my bookings</h2>
         <div class="bookings-list">
           <div v-for="booking in bookings" 
               :key="booking.id" 
@@ -76,9 +76,9 @@
               :class="booking.status">
             <div class="booking-info">
               <h3>{{ getAnimalName(booking.animal) }}</h3>
-              <p><strong>Propriétaire:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
+              <p><strong>Owner:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
               <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
-              <p class="status"><strong>Statut:</strong> {{ getStatusLabel(booking.status) }}</p>
+              <p class="status"><strong>Status:</strong> {{ getStatusLabel(booking.status) }}</p>
               <div v-if="booking.status === 'accepted'" class="booking-actions">
                 <button class="book-company-btn" 
                         @click="bookCompanyForAnimal(booking)" 
@@ -87,7 +87,7 @@
                   {{ animalsWithCompanyBookings[booking.animal] ? 'Déjà réservé' : 'Réserver pour cet animal' }}
                 </button>
                 <div v-if="animalsWithCompanyBookings[booking.animal]" class="reservation-info">
-                  <p>Réservation existante avec {{ getCompanyName(animalsWithCompanyBookings[booking.animal].company) }}</p>
+                  <p>Existing booking with {{ getCompanyName(animalsWithCompanyBookings[booking.animal].company) }}</p>
                 </div>
               </div>
             </div>
@@ -97,15 +97,15 @@
 
       <!-- Section Réservations complètes (client → pet sitter → compagnie) -->
       <div v-if="!error && linkedBookings.length > 0" class="linked-bookings-section">
-        <h2>Réservations client → vous → compagnie</h2>
+        <h2>Bookings client → you → company</h2>
         <div class="bookings-list">
           <div v-for="(item, idx) in linkedBookings" :key="idx" class="booking-card accepted">
             <div>
-              <h3>Animal : {{ getAnimalName(item.clientBooking.animal) }}</h3>
-              <p><strong>Propriétaire:</strong> {{ getOwnerName(item.clientBooking.animal_owner) }}</p>
+              <h3>Pet : {{ getAnimalName(item.clientBooking.animal) }}</h3>
+              <p><strong>Owner:</strong> {{ getOwnerName(item.clientBooking.animal_owner) }}</p>
               <p><strong>Dates:</strong> {{ formatDate(item.clientBooking.start_date) }} - {{ formatDate(item.clientBooking.end_date) }}</p>
-              <p><strong>Réservation compagnie:</strong> {{ getCompanyName(item.companyBooking.company) }} ({{ formatDate(item.companyBooking.start_date) }} - {{ formatDate(item.companyBooking.end_date) }})</p>
-              <p><strong>Statut compagnie:</strong> {{ getStatusLabel(item.companyBooking.status) }}</p>
+              <p><strong>Company booking:</strong> {{ getCompanyName(item.companyBooking.company) }} ({{ formatDate(item.companyBooking.start_date) }} - {{ formatDate(item.companyBooking.end_date) }})</p>
+              <p><strong>Company status:</strong> {{ getStatusLabel(item.companyBooking.status) }}</p>
             </div>
           </div>
         </div>
@@ -113,8 +113,8 @@
 
       <!-- Section Companies - Déplacée après les réservations -->
       <div v-if="!error" class="companies-section">
-        <h2>Entreprises partenaires</h2>
-        <p class="section-description">Consultez nos entreprises partenaires pour des services spécialisés et des formations.</p>
+        <h2>Partner companies</h2>
+        <p class="section-description">Consult our partner companies for specialist services and training.</p>
         
         <div v-if="companies.length > 0" class="companies-list-vertical">
           <div v-for="company in companies" 
@@ -123,18 +123,18 @@
               @click="goToCompanyDetail(company.id)">
             <div class="company-info">
               <h3>{{ company.name }}</h3>
-              <p class="capacity">Capacité: {{ company.capacity }} animaux</p>
+              <p class="capacity">Capacity: {{ company.capacity }} pets</p>
               <p class="address">{{ company.address }}</p>
               <div class="company-card-actions">
                 <button class="reservation-btn" @click.stop="startNewReservation(company.id)">
-                  Réserver un service
+                  Book a service
                 </button>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="empty-message">
-          <p>Aucune entreprise partenaire disponible pour le moment.</p>
+          <p>No partner company available at the moment.</p>
         </div>
       </div>
     </div>
@@ -143,36 +143,36 @@
     <!-- Modal de création de réservation avec une compagnie -->
     <div v-if="showReservationModal" class="modal-backdrop" @click="closeModal">
       <div class="modal-content" @click.stop>
-        <h3>Réserver un service avec {{ selectedCompany ? selectedCompany.name : '' }}</h3>
+        <h3>Book a service with {{ selectedCompany ? selectedCompany.name : '' }}</h3>
         <form @submit.prevent="createCompanyReservation" class="reservation-form">
           <div class="form-group">
-            <label for="service-type">Type de service</label>
+            <label for="service-type">Type of service</label>
             <select id="service-type" v-model="newReservation.service_type" required>
-              <option value="">Sélectionnez un service</option>
-              <option value="formation">Formation spécialisée</option>
-              <option value="consultation">Consultation professionnelle</option>
-              <option value="collaboration">Collaboration pour garde d'animaux</option>
+              <option value="">Select a service</option>
+              <option value="formation">Specialist training</option>
+              <option value="consultation">Professional consultation</option>
+              <option value="collaboration">Collaboration for pet sitting</option>
             </select>
           </div>
           
           <div class="form-group">
-            <label for="start-date">Date de début</label>
+            <label for="start-date">Start date</label>
             <input type="date" id="start-date" v-model="newReservation.start_date" required>
           </div>
           
           <div class="form-group">
-            <label for="end-date">Date de fin</label>
+            <label for="end-date">End date</label>
             <input type="date" id="end-date" v-model="newReservation.end_date" required>
           </div>
           
           <div class="form-group">
-            <label for="details">Détails supplémentaires</label>
+            <label for="details">Further details</label>
             <textarea id="details" v-model="newReservation.details" 
                       placeholder="Précisez vos besoins et attentes pour ce service"></textarea>
           </div>
           
           <div class="form-actions">
-            <button type="button" class="cancel-btn" @click="closeModal">Annuler</button>
+            <button type="button" class="cancel-btn" @click="closeModal">Cancel</button>
             <button type="submit" class="submit-btn" :disabled="isSubmittingReservation">
               {{ isSubmittingReservation ? 'Création en cours...' : 'Créer la réservation' }}
             </button>
@@ -184,11 +184,11 @@
     <!-- Modal de modification du profil -->
     <div v-if="showProfileModal" class="modal-backdrop" @click="showProfileModal = false">
       <div class="modal-content" @click.stop>
-        <h3>Modifier mon profil</h3>
+        <h3>Modify my profile</h3>
         
         <form @submit.prevent="updateUserProfile" class="profile-form">
           <div class="form-group">
-            <label for="name">Nom</label>
+            <label for="name">Name</label>
             <input type="text" id="name" v-model="profileForm.name" required>
           </div>
           
@@ -198,39 +198,39 @@
           </div>
           
           <div class="form-group">
-            <label for="address">Adresse</label>
+            <label for="address">Address</label>
             <input type="text" id="address" v-model="profileForm.address">
           </div>
           
           <div class="form-group">
-            <label for="experience">Expérience</label>
+            <label for="experience">Experience</label>
             <textarea id="experience" v-model="profileForm.experience" rows="4" required></textarea>
           </div>
           
           <div class="form-group">
-            <label for="capacity">Capacité (nombre d'animaux)</label>
+            <label for="capacity">Capacity (number of pets)</label>
             <input type="number" id="capacity" v-model="profileForm.capacity" min="1">
           </div>
           
-          <h4>Changer le mot de passe (optionnel)</h4>
+          <h4>Change password (optional)</h4>
           
           <div class="form-group">
-            <label for="current-password">Mot de passe actuel</label>
+            <label for="current-password">Current password</label>
             <input type="password" id="current-password" v-model="profileForm.currentPassword">
           </div>
           
           <div class="form-group">
-            <label for="new-password">Nouveau mot de passe</label>
+            <label for="new-password">New password</label>
             <input type="password" id="new-password" v-model="profileForm.newPassword">
           </div>
           
           <div class="form-group">
-            <label for="confirm-password">Confirmer le nouveau mot de passe</label>
+            <label for="confirm-password">Confirm new password</label>
             <input type="password" id="confirm-password" v-model="profileForm.confirmPassword">
           </div>
           
           <div class="form-actions">
-            <button type="button" class="cancel-btn" @click="showProfileModal = false">Annuler</button>
+            <button type="button" class="cancel-btn" @click="showProfileModal = false">Cancel</button>
             <button type="submit" class="submit-btn" :disabled="isUpdatingProfile">
               {{ isUpdatingProfile ? 'Mise à jour en cours...' : 'Mettre à jour' }}
             </button>
@@ -243,10 +243,10 @@
   <!-- Modal pour réserver une entreprise pour un animal spécifique -->
   <div v-if="showCompanyReservationModal" class="modal-backdrop" @click="cancelCompanyReservation">
     <div class="modal-content" @click.stop>
-      <h3>Réserver une entreprise pour {{ getAnimalName(selectedBooking?.animal) }}</h3>
+      <h3>Book a company for {{ getAnimalName(selectedBooking?.animal) }}</h3>
       
       <div class="company-selection">
-        <p>Choisissez une entreprise :</p>
+        <p>Choose a company :</p>
         <div class="companies-list-modal">
           <div 
             v-for="company in companies" 
@@ -257,24 +257,24 @@
           >
             <h4>{{ company.name }}</h4>
             <p>{{ company.address || 'Adresse non disponible' }}</p>
-            <p>Capacité: {{ company.capacity || 'N/A' }}</p>
+            <p>Capacity: {{ company.capacity || 'N/A' }}</p>
           </div>
         </div>
       </div>
       
       <form @submit.prevent="submitCompanyReservation" class="reservation-form">
         <div class="form-group">
-          <label for="service-type-animal">Type de service</label>
+          <label for="service-type-animal">Type of service</label>
           <select id="service-type-animal" v-model="companyReservationForm.service_type" required>
-            <option value="">Sélectionnez un service</option>
-            <option value="formation">Formation spécialisée</option>
-            <option value="consultation">Consultation professionnelle</option>
-            <option value="collaboration">Collaboration pour garde d'animaux</option>
+            <option value="">Select a service</option>
+            <option value="formation">Specialist training</option>
+            <option value="consultation">Professional consultation</option>
+            <option value="collaboration">Collaboration for pet sitting</option>
           </select>
         </div>
         
         <div class="form-group">
-          <label for="start-date-animal">Date de début</label>
+          <label for="start-date-animal">Start date</label>
           <input 
             type="date" 
             id="start-date-animal" 
@@ -285,7 +285,7 @@
         </div>
         
         <div class="form-group">
-          <label for="end-date-animal">Date de fin</label>
+          <label for="end-date-animal">End date</label>
           <input 
             type="date" 
             id="end-date-animal" 
@@ -296,7 +296,7 @@
         </div>
         
         <div class="form-group">
-          <label for="details-animal">Détails supplémentaires</label>
+          <label for="details-animal">Further details</label>
           <textarea 
             id="details-animal" 
             v-model="companyReservationForm.details" 
@@ -305,7 +305,7 @@
         </div>
         
         <div class="form-actions">
-          <button type="button" class="cancel-btn" @click="cancelCompanyReservation">Annuler</button>
+          <button type="button" class="cancel-btn" @click="cancelCompanyReservation">Cancel</button>
           <button type="submit" class="submit-btn" :disabled="isReserving">
             {{ isReserving ? 'Création en cours...' : 'Créer la réservation' }}
           </button>

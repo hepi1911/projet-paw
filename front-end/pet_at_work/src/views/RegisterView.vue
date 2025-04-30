@@ -4,7 +4,7 @@
       <h1>{{ $t('auth.register') }}</h1>
       <form v-if="!registrationComplete" @submit.prevent="handleRegister" class="register-form">
         <div class="form-group">
-          <label for="name">Nom:</label>
+          <label for="name">Name:</label>
           <input 
             type="text" 
             id="name" 
@@ -24,7 +24,7 @@
         </div>
 
         <div class="form-group">
-          <label for="password">Mot de passe:</label>
+          <label for="password">Password:</label>
           <input 
             type="password" 
             id="password" 
@@ -33,15 +33,15 @@
             @input="validatePassword"
             placeholder="Votre mot de passe">
           <ul class="password-requirements" :class="{ valid: passwordValid }">
-            <li :class="{ met: passwordLength }">Au moins 8 caractères</li>
-            <li :class="{ met: hasUpperCase }">Au moins une majuscule</li>
-            <li :class="{ met: hasLowerCase }">Au moins une minuscule</li>
-            <li :class="{ met: hasNumber }">Au moins un chiffre</li>
+            <li :class="{ met: passwordLength }">At least 8 characters</li>
+            <li :class="{ met: hasUpperCase }">At least one upper case letter</li>
+            <li :class="{ met: hasLowerCase }">At least one lower case letter</li>
+            <li :class="{ met: hasNumber }">At least one digit</li>
           </ul>
         </div>
 
         <div class="form-group">
-          <label for="confirmPassword">Confirmer le mot de passe:</label>
+          <label for="confirmPassword">Confirm password:</label>
           <input 
             type="password" 
             id="confirmPassword" 
@@ -55,18 +55,18 @@
         </div>
 
         <div class="form-group">
-          <label for="role">Type de compte:</label>
+          <label for="role">Type of account:</label>
           <select id="role" v-model="formData.role" required>
-            <option value="">Sélectionnez un type</option>
-            <option value="petowner">Propriétaire d'animal</option>
+            <option value="">Select a type</option>
+            <option value="petowner">Pet Owner</option>
             <option value="petsitter">Pet Sitter</option>
-            <option value="company">Entreprise</option>
+            <option value="company">Company</option>
           </select>
         </div>
 
         <!-- Champs conditionnels selon le rôle -->
         <div v-if="formData.role === 'petowner' || formData.role === 'company'" class="form-group">
-          <label for="address">Adresse:</label>
+          <label for="address">Address:</label>
           <input 
             type="text" 
             id="address" 
@@ -76,7 +76,7 @@
         </div>
 
         <div v-if="formData.role === 'petsitter'" class="form-group">
-          <label for="experience">Expérience:</label>
+          <label for="experience">Experience:</label>
           <textarea 
             id="experience" 
             v-model="formData.experience" 
@@ -85,7 +85,7 @@
         </div>
 
         <div v-if="formData.role === 'company'" class="form-group">
-          <label for="capacity">Capacité d'accueil:</label>
+          <label for="capacity">Capacity:</label>
           <input 
             type="number" 
             id="capacity" 
@@ -104,15 +104,15 @@
         </button>
 
         <p class="login-link">
-          Déjà un compte? 
-          <router-link to="/login">Se connecter</router-link>
+          Already an account? 
+          <router-link to="/login">Login</router-link>
         </p>
       </form>
 
       <div v-else class="confirmation-step">
-        <h2>Inscription réussie!</h2>
-        <p>Votre compte a été créé avec succès.</p>
-        <p>Cliquez sur "Continuer" pour accéder à la page de connexion et vous connecter avec vos nouveaux identifiants.</p>
+        <h2>Successful registration!</h2>
+        <p>Your account has been created successfully.</p>
+        <p>Click ‘Continue’ to go to the login page and log in with your new details.</p>
         <button @click="handleContinue" class="submit-button">Continuer</button>
       </div>
     </div>

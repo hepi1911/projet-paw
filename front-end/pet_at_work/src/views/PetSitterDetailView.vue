@@ -2,7 +2,7 @@
   <div class="view-container">
     <div class="petsitter-detail">
       <div v-if="loading" class="loading">
-        Chargement...
+        Loading...
       </div>
       
       <div v-else-if="error" class="error">
@@ -11,7 +11,7 @@
       
       <div v-else-if="sitter" class="sitter-container">
         <div class="back-link">
-          <router-link to="/petowner">&larr; Retour à la liste des pet sitters</router-link>
+          <router-link to="/petowner">&larr; Back to the list of pet sitters</router-link>
         </div>
         
         <div class="sitter-profile">
@@ -22,21 +22,21 @@
           
           <div class="sitter-body">
             <div class="sitter-info">
-              <h2>Expérience</h2>
+              <h2>Experience</h2>
               <p>{{ sitter.experience }}</p>
               
-              <h2>Services proposés</h2>
+              <h2>Services on offer</h2>
               <ul>
-                <li>Garde à domicile</li>
-                <li>Promenade</li>
-                <li>Soins basiques</li>
+                <li>Petsitting at home</li>
+                <li>Walk</li>
+                <li>Basic care</li>
               </ul>
               
-              <h2>Disponibilité</h2>
+              <h2>Availability</h2>
               <p>{{ sitter.availability || 'Disponible tous les jours' }}</p>
               
               <div class="ratings">
-                <h2>Évaluations</h2>
+                <h2>Ratings</h2>
                 <div class="stars">
                   <span>★★★★☆</span> <span class="rating-score">4.0/5</span>
                 </div>
@@ -47,18 +47,18 @@
         
         <!-- Section de tarification -->
         <div class="pricing-info">
-          <h2>Tarification</h2>
-          <p class="pricing-details">Gardiennage: <span class="price">10€</span> par jour</p>
+          <h2>Pricing</h2>
+          <p class="pricing-details">Guarding: <span class="price">10£</span> per day</p>
         </div>
         
         <!-- Section de réservation - conditionnelle en fonction de l'état de connexion -->
         <div v-if="isLoggedIn" class="booking-section">
-          <h2>Réserver ce pet sitter</h2>
+          <h2>Book this pet sitter</h2>
           <form @submit.prevent="submitBooking">
             <div class="form-group">
-              <label for="animal">Sélectionnez votre animal</label>
+              <label for="animal">Select your pet</label>
               <select id="animal" v-model="booking.animalId" required>
-                <option disabled value="">Choisissez un animal</option>
+                <option disabled value="">Choose a pet</option>
                 <option v-for="animal in animals" :key="animal.id" :value="animal.id">
                   {{ animal.name }} ({{ animal.breed }})
                 </option>
@@ -66,55 +66,55 @@
             </div>
             
             <div class="form-group">
-              <label for="start-date">Date de début</label>
+              <label for="start-date">Start date</label>
               <input type="date" id="start-date" v-model="booking.startDate" @change="calculatePrice" required />
             </div>
             
             <div class="form-group">
-              <label for="end-date">Date de fin</label>
+              <label for="end-date">End date</label>
               <input type="date" id="end-date" v-model="booking.endDate" @change="calculatePrice" required />
             </div>
             
             <!-- Affichage du prix calculé -->
             <div v-if="totalDays > 0" class="price-calculation">
-              <p><strong>Durée:</strong> {{ totalDays }} jour{{ totalDays > 1 ? 's' : '' }}</p>
-              <p class="total-price"><strong>Prix total:</strong> {{ totalPrice }}€</p>
+              <p><strong>Duration:</strong> {{ totalDays }} day{{ totalDays > 1 ? 's' : '' }}</p>
+              <p class="total-price"><strong>Total price:</strong> {{ totalPrice }}£</p>
             </div>
             
             <div class="form-group">
-              <label for="notes">Instructions spéciales</label>
+              <label for="notes">Special instructions</label>
               <textarea id="notes" v-model="booking.notes" rows="4"></textarea>
             </div>
             
-            <button type="submit" class="submit-btn">Réserver et procéder au paiement</button>
+            <button type="submit" class="submit-btn">Book and pay</button>
           </form>
           
           <div v-if="bookingSuccess" class="success-message">
-            <p>Votre réservation a été créée avec succès!</p>
+            <p>Your booking has been successfully created!</p>
             
             <!-- Section de paiement -->
             <div class="payment-section">
-              <h3>Finaliser votre réservation</h3>
+              <h3>Finalise your booking</h3>
               <div class="test-mode-notice">
-                <p><strong>Mode test activé :</strong> Les paiements sont optionnels pendant cette phase.</p>
+                <p><strong>Test mode activated :</strong> Payments are optional during this phase.</p>
               </div>
               <div class="payment-options-container">
                 <button @click="skipPayment" class="skip-payment-btn">
-                  Continuer sans payer (mode test)
+                  Continue without paying (test mode)
                 </button>
                 <p>-- ou --</p>
-                <p>Procéder au paiement (facultatif) :</p>
+                <p>Proceed to payment (optional) :</p>
               </div>
               
               <div class="payment-details">
-                <p><strong>Montant à payer:</strong> {{ totalPrice }}€</p>
+                <p><strong>Amount due:</strong> {{ totalPrice }}£</p>
                 
                 <div class="payment-method">
-                  <h4>Mode de paiement</h4>
+                  <h4>Method of payment</h4>
                   <div class="payment-options">
                     <label>
                       <input type="radio" v-model="paymentMethod" value="card" checked>
-                      Carte bancaire
+                      Credit card
                     </label>
                     <label>
                       <input type="radio" v-model="paymentMethod" value="paypal">
@@ -122,20 +122,20 @@
                     </label>
                     <label>
                       <input type="radio" v-model="paymentMethod" value="transfer">
-                      Virement bancaire
+                      Bank transfer
                     </label>
                   </div>
                 </div>
                 
                 <div v-if="paymentMethod === 'card'" class="card-details">
                   <div class="form-group">
-                    <label for="card-number">Numéro de carte</label>
+                    <label for="card-number">Card number</label>
                     <input type="text" id="card-number" v-model="paymentDetails.cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
                   </div>
                   
                   <div class="card-info-row">
                     <div class="form-group expiry">
-                      <label for="expiry-date">Date d'expiration</label>
+                      <label for="expiry-date">Expiry date</label>
                       <input type="text" id="expiry-date" v-model="paymentDetails.expiryDate" placeholder="MM/AA" maxlength="5">
                     </div>
                     
@@ -146,7 +146,7 @@
                   </div>
                   
                   <div class="form-group">
-                    <label for="card-name">Nom sur la carte</label>
+                    <label for="card-name">Name on card</label>
                     <input type="text" id="card-name" v-model="paymentDetails.cardName" placeholder="JEAN DUPONT">
                   </div>
                 </div>
@@ -159,8 +159,8 @@
           </div>
           
           <div v-if="paymentSuccess" class="payment-success">
-            <p>Paiement effectué avec succès! Votre réservation est confirmée.</p>
-            <p>Vous allez être redirigé vers votre espace personnel...</p>
+            <p>Payment made successfully! Your booking is confirmed.</p>
+            <p>You will be redirected to your personal space...</p>
           </div>
           
           <div v-if="bookingError" class="error-message">
@@ -174,10 +174,10 @@
         
         <!-- Message pour encourager la connexion - visible uniquement pour les utilisateurs non connectés -->
         <div v-else class="login-prompt">
-          <p>Pour réserver les services de ce pet sitter, vous devez vous connecter à votre compte.</p>
+          <p>To book the services of this pet sitter, you need to log in to your account.</p>
           <div class="login-buttons">
-            <button class="login-btn" @click="goToLogin">Se connecter</button>
-            <button class="register-btn" @click="goToRegister">S'inscrire</button>
+            <button class="login-btn" @click="goToLogin">Login</button>
+            <button class="register-btn" @click="goToRegister">Register</button>
           </div>
         </div>
       </div>

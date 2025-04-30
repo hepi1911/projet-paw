@@ -3,10 +3,10 @@
     <div class="profile-container">
       <h1>{{ $t('profile.title') }}</h1>
       <div class="profile">
-        <h2>Mon Profil</h2>
+        <h2>My Profile</h2>
         <form @submit.prevent="updateProfile" class="profile-form">
           <div class="form-group">
-            <label for="name">Nom</label>
+            <label for="name">Name</label>
             <input type="text" id="name" v-model="form.name" required>
           </div>
 
@@ -16,29 +16,29 @@
           </div>
 
           <div class="form-group">
-            <label for="address">Adresse</label>
+            <label for="address">Address</label>
             <input type="text" id="address" v-model="form.address" 
                    :required="form.role === 'petowner' || form.role === 'company'">
           </div>
 
           <div class="form-group" v-if="form.role === 'petsitter'">
-            <label for="experience">Expérience</label>
+            <label for="experience">Experience</label>
             <textarea id="experience" v-model="form.experience" required></textarea>
           </div>
 
           <div class="form-group" v-if="form.role === 'company'">
-            <label for="capacity">Capacité</label>
+            <label for="capacity">Capacity</label>
             <input type="number" id="capacity" v-model="form.capacity" required>
           </div>
 
-          <h3>Changer le mot de passe</h3>
+          <h3>Change password</h3>
           <div class="form-group">
-            <label for="currentPassword">Mot de passe actuel</label>
+            <label for="currentPassword">Current password</label>
             <input type="password" id="currentPassword" v-model="form.currentPassword">
           </div>
 
           <div class="form-group">
-            <label for="newPassword">Nouveau mot de passe</label>
+            <label for="newPassword">New password</label>
             <input type="password" id="newPassword" v-model="form.newPassword"
                    :disabled="!form.currentPassword"
                    pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
@@ -46,12 +46,12 @@
           </div>
 
           <div class="form-group">
-            <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+            <label for="confirmPassword">Confirm new password</label>
             <input type="password" id="confirmPassword" v-model="form.confirmPassword"
                    :disabled="!form.currentPassword">
           </div>
 
-          <button type="submit" class="btn btn-primary">Mettre à jour</button>
+          <button type="submit" class="btn btn-primary">Update</button>
         </form>
       </div>
     </div>

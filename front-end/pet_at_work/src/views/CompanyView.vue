@@ -7,7 +7,7 @@
     </div>
     
     <div class="company-dashboard">
-      <h1>Tableau de bord Company</h1>
+      <h1>Dashboard Company</h1>
       
       <!-- Navigation -->
       <div class="profile-nav">
@@ -130,29 +130,29 @@
           </div>
           
           <div class="form-group">
-            <label for="capacity">Capacité (nombre d'animaux)</label>
+            <label for="capacity">Capacity (number of pets)</label>
             <input type="number" id="capacity" v-model="profileForm.capacity" min="1">
           </div>
           
-          <h4>Changer le mot de passe (optionnel)</h4>
+          <h4>Change the password (optional)</h4>
           
           <div class="form-group">
-            <label for="current-password">Mot de passe actuel</label>
+            <label for="current-password">Current password</label>
             <input type="password" id="current-password" v-model="profileForm.currentPassword">
           </div>
           
           <div class="form-group">
-            <label for="new-password">Nouveau mot de passe</label>
+            <label for="new-password">New password</label>
             <input type="password" id="new-password" v-model="profileForm.newPassword">
           </div>
           
           <div class="form-group">
-            <label for="confirm-password">Confirmer le nouveau mot de passe</label>
+            <label for="confirm-password">Confirm the new password</label>
             <input type="password" id="confirm-password" v-model="profileForm.confirmPassword">
           </div>
           
           <div class="form-actions">
-            <button type="button" class="cancel-btn" @click="showProfileModal = false">Annuler</button>
+            <button type="button" class="cancel-btn" @click="showProfileModal = false">Cancel</button>
             <button type="submit" class="submit-btn" :disabled="isUpdatingProfile">
               {{ isUpdatingProfile ? 'Mise à jour en cours...' : 'Mettre à jour' }}
             </button>

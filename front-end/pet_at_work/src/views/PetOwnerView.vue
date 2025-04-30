@@ -8,14 +8,14 @@
           
           <!-- Sélection du mode de vue (Pet Owner/Pet Sitter) - Visible seulement si l'utilisateur a plusieurs rôles -->
           <div class="view-mode-selector" v-if="hasMultipleRoles">
-            <h3>Voir les réservations pour :</h3>
+            <h3>See bookings for:</h3>
             <div class="view-mode-buttons">
               <button 
                 class="mode-btn" 
                 :class="{ 'active': viewMode === 'owner' }"
                 @click="switchViewMode('owner')"
                 :disabled="!userHasRole('petowner')">
-                Propriétaire d'animal
+                Pet Owner
               </button>
               <button 
                 class="mode-btn" 
@@ -111,7 +111,7 @@
 
           <!-- Section Réservations des Pet Owners -->
           <div class="bookings-section" v-if="isLoggedIn && viewMode === 'owner' && ownerBookings.length > 0">
-            <h2>{{ $t('bookings.my_bookings') }} (Propriétaire)</h2>
+            <h2>{{ $t('bookings.my_bookings') }} (Owner)</h2>
             <div class="bookings-list">
               <div v-for="booking in ownerBookings" 
                    :key="booking.id" 
@@ -136,7 +136,7 @@
 
           <!-- Section Réservations des Pet Sitters -->
           <div class="bookings-section" v-if="isLoggedIn && viewMode === 'sitter' && sitterBookings.length > 0">
-            <h2>Réservations (Pet Sitter)</h2>
+            <h2>Bookings (Pet Sitter)</h2>
             <div class="bookings-list">
               <div v-for="booking in sitterBookings" 
                    :key="booking.id" 
@@ -144,9 +144,9 @@
                    :class="booking.status">
                 <div class="booking-info">
                   <h3>{{ getAnimalName(booking.animal) }}</h3>
-                  <p><strong>Propriétaire:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
+                  <p><strong>Owner:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
                   <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
-                  <p class="status"><strong>Statut:</strong> {{ getStatusLabel(booking.status) }}</p>
+                  <p class="status"><strong>Status:</strong> {{ getStatusLabel(booking.status) }}</p>
                   <div v-if="booking.status === 'pending'" class="booking-actions">
                     <button class="accept-btn" @click="updateBookingStatus(booking.id, 'accepted')" :disabled="isUpdating">
                       {{ isUpdating === booking.id ? 'En cours...' : 'Accepter' }}
@@ -162,7 +162,7 @@
 
           <!-- Message si aucune réservation -->
           <div v-if="isLoggedIn && ((viewMode === 'owner' && ownerBookings.length === 0) || (viewMode === 'sitter' && sitterBookings.length === 0))" class="no-bookings-message">
-            <p>Aucune réservation à afficher pour le moment.</p>
+            <p>No bookings to display at the moment.</p>
           </div>
 
           <!-- Section Pet Sitters - Visible pour tous les utilisateurs -->

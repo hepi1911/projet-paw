@@ -14,7 +14,7 @@
         </div>
 
         <div class="form-group">
-          <label for="password">Mot de passe:</label>
+          <label for="password">Password:</label>
           <input 
             type="password" 
             id="password" 
@@ -27,11 +27,11 @@
           {{ error }}
         </div>
 
-        <button type="submit" class="submit-button">Se connecter</button>
+        <button type="submit" class="submit-button">Login</button>
 
         <p class="register-link">
-          Pas encore de compte? 
-          <router-link to="/register">Créer un compte</router-link>
+          No account yet? 
+          <router-link to="/register">Create an account</router-link>
         </p>
       </form>
     </div>

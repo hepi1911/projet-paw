@@ -60,7 +60,7 @@
                   <label for="animal-breed">{{ $t('animals.breed') }}</label>
                   <input 
                     id="animal-breed" 
-                    v-model="newAnimal.bbreed" 
+                    v-model="newAnimal.breed" 
                     type="text" 
                     required
                     :placeholder="$t('petowner.animal_breed_placeholder')">
@@ -272,12 +272,12 @@ const addAnimal = async () => {
       return;
     }
     
-    // Envoyer les données au backend avec le nom correct du champ (medical_info au lieu de maladie)
+    // Envoyer les données au backend avec le nom correct du champ
     const createdAnimal = await apiService.createAnimal({
       name: newAnimal.value.name,
       breed: newAnimal.value.breed,
-      age: parseInt(newAnimal.value.age), // Convertir l'âge en nombre
-      medical_info: newAnimal.value.maladie || '' // Utiliser medical_info au lieu de maladie
+      age: newAnimal.value.age,
+      maladie: newAnimal.value.maladie || ''
     });
     
     // Ajouter l'animal créé à la liste des animaux de l'utilisateur

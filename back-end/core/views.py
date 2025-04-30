@@ -601,14 +601,14 @@ class BookingViewSet(viewsets.ModelViewSet):
     def update_status(self, request, pk=None):
         """
         Permet aux pet sitters et aux propriétaires d'animaux de mettre à jour le statut d'une réservation.
-        Si c'est le pet owner qui annule, toutes les réservations associées seront également annulées.
-        En mode test, les propriétaires d'animaux peuvent également marquer leurs réservations comme 'accepted'
-        sans passer par le processus de paiement.
+        - Les pet sitters peuvent accepter ou refuser une réservation (statut 'accepted' ou 'refused')
+        - Les pet owners peuvent annuler leurs réservations (statut 'cancelled')
+        - Les administrateurs peuvent modifier n'importe quel statut
         """
         booking = self.get_object()
         user = request.user
         
-        # Vérifier que l'utilisateur est soit le pet sitter concerné, soit le propriétaire de l'animal (mode test)
+        # Vérifier que l'utilisateur est soit le pet sitter concerné, soit le propriétaire de l'animal
         is_authorized = (
             (user.role == 'petsitter' and booking.sitter.id == user.id) or
             (user.role == 'petowner' and booking.animal.owner.id == user.id) or
@@ -632,20 +632,22 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Si c'est le pet owner qui met à jour le statut en 'accepted' en mode test, permettre cette action
-        is_test_owner_accept = (
-            user.role == 'petowner' and 
-            booking.animal.owner.id == user.id and 
-            new_status == 'accepted'
-        )
-        
-        # Si c'est le pet sitter qui n'a pas accès à certains statuts, bloquer
-        if user.role == 'petsitter' and booking.sitter.id == user.id and new_status not in ['accepted', 'refused', 'cancelled']:
-            return Response(
-                {'error': f'Les pet sitters ne peuvent mettre à jour le statut qu\'en: accepted, refused, cancelled'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+        # Vérifier les permissions selon le rôle de l'utilisateur
+        if user.role == 'petsitter' and booking.sitter.id == user.id:
+            # Les pet sitters peuvent uniquement accepter ou refuser
+            if new_status not in ['accepted', 'refused']:
+                return Response(
+                    {'error': 'Les pet sitters ne peuvent modifier le statut qu\'en "accepted" ou "refused"'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif user.role == 'petowner' and booking.animal.owner.id == user.id:
+            # Les pet owners peuvent uniquement annuler
+            if new_status != 'cancelled':
+                return Response(
+                    {'error': 'Les propriétaires d\'animaux ne peuvent que annuler leurs réservations'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
         # Si le pet owner annule une réservation, annuler également toutes les réservations associées
         is_pet_owner_cancelling = (
             user.role == 'petowner' and 
@@ -662,7 +664,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 end_date__lte=booking.end_date
             )
             
-            # Annuler toutes ces réservations associées (changement de statut au lieu de supprimer)
+            # Annuler toutes ces réservations associées
             for assoc_booking in associated_bookings:
                 assoc_booking.status = 'cancelled'
                 assoc_booking.save()
@@ -673,7 +675,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 # Log pour le débogage
                 print(f"Réservation associée annulée (ID: {assoc_booking.id})")
         
-        # Mettre à jour le statut de la réservation (au lieu de supprimer)
+        # Mettre à jour le statut de la réservation
         old_status = booking.status
         booking.status = new_status
         booking.save()
@@ -681,19 +683,15 @@ class BookingViewSet(viewsets.ModelViewSet):
         # Envoyer l'email de notification de changement de statut
         send_booking_status_email(booking, new_status)
         
-        # Message spécifique pour le mode test
-        if is_test_owner_accept:
-            message = "Réservation acceptée avec succès (mode test - sans paiement)"
-        else:
-            status_labels = {
-                'accepted': 'acceptée',
-                'refused': 'refusée', 
-                'cancelled': 'annulée',
-                'finished': 'terminée',
-                'paid': 'payée'
-            }
-            status_label = status_labels.get(new_status, new_status)
-            message = f"Réservation {status_label} avec succès"
+        # Préparer un message de réponse adapté
+        status_labels = {
+            'accepted': 'acceptée',
+            'refused': 'refusée', 
+            'cancelled': 'annulée',
+            'paid': 'payée'
+        }
+        status_label = status_labels.get(new_status, new_status)
+        message = f"Réservation {status_label} avec succès"
         
         # Renvoyer les données mises à jour
         serializer = self.get_serializer(booking)
@@ -1086,7 +1084,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             else:
                 subject = f"Confirmation de paiement - Réservation d'entreprise #{company_booking_id}"
                 message = f"Bonjour {user.name},\n\nVotre paiement de {amount}€ pour la réservation de {company_booking.animal.name} auprès de {company_booking.company.name} a été accepté.\n\nIdentifiant de transaction: {payment.transaction_id}\n\nMerci d'utiliser Pet at Work!"
-            
+
             try:
                 send_mail(
                     subject,
@@ -1172,7 +1170,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             
             subject = "Confirmation de remboursement"
             message = f"Bonjour {owner_name},\n\nVotre paiement de {payment.amount}€ a été remboursé.\n\nIdentifiant de transaction: {payment.transaction_id}\n\nMerci d'utiliser Pet at Work!"
-            
+
             send_mail(
                 subject,
                 message,
@@ -1398,3 +1396,135 @@ def list_users_test(request):
             'success': False,
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def debug_login(request):
+    """
+    Vue de diagnostic avancé qui teste l'authentification et renvoie des informations détaillées
+    sur chaque étape du processus d'authentification.
+    """
+    from rest_framework_simplejwt.tokens import RefreshToken
+    from django.contrib.auth import authenticate
+    import sys
+    
+    # Récupérer les identifiants
+    email = request.data.get('email')
+    password = request.data.get('password')
+    
+    response_data = {
+        'debug_info': {
+            'email_reçu': email,
+            'password_reçu': '***' if password else None,
+            'longueur_password': len(password) if password else 0,
+            'étapes': []
+        }
+    }
+    
+    # Étape 1: Vérifier que l'email et le mot de passe sont fournis
+    if not email or not password:
+        response_data['debug_info']['étapes'].append({
+            'étape': 'validation_entrée',
+            'statut': 'échec',
+            'raison': 'Email ou mot de passe manquant'
+        })
+        response_data['error'] = 'Email et mot de passe requis'
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+    
+    response_data['debug_info']['étapes'].append({
+        'étape': 'validation_entrée',
+        'statut': 'succès'
+    })
+    
+    # Standardiser email en minuscules
+    email_lower = email.lower()
+    response_data['debug_info']['email_normalisé'] = email_lower
+    
+    # Étape 2: Vérifier si l'utilisateur existe
+    try:
+        user_exists = User.objects.filter(email=email_lower).exists()
+        
+        if user_exists:
+            user = User.objects.get(email=email_lower)
+            response_data['debug_info']['utilisateur_trouvé'] = True
+            response_data['debug_info']['user_id'] = user.id
+            response_data['debug_info']['is_active'] = user.is_active
+            response_data['debug_info']['password_hash_début'] = user.password[:20] + '...' if user.password else None
+        else:
+            response_data['debug_info']['utilisateur_trouvé'] = False
+            response_data['debug_info']['étapes'].append({
+                'étape': 'vérification_utilisateur',
+                'statut': 'échec',
+                'raison': f'Aucun utilisateur trouvé avec l\'email {email_lower}'
+            })
+            response_data['error'] = 'Identifiants incorrects'
+            return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
+        
+        response_data['debug_info']['étapes'].append({
+            'étape': 'vérification_utilisateur',
+            'statut': 'succès'
+        })
+    except Exception as e:
+        response_data['debug_info']['étapes'].append({
+            'étape': 'vérification_utilisateur',
+            'statut': 'erreur',
+            'exception': str(e),
+            'traceback': str(sys.exc_info())
+        })
+        response_data['error'] = f'Erreur lors de la vérification de l\'utilisateur: {str(e)}'
+        return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    # Étape 3: Tentative d'authentification
+    try:
+        auth_user = authenticate(request, email=email_lower, password=password)
+        
+        if auth_user is not None:
+            response_data['debug_info']['authentification'] = 'réussie'
+            response_data['debug_info']['auth_user_id'] = auth_user.id
+            
+            # Créer tokens JWT
+            refresh = RefreshToken.for_user(auth_user)
+            
+            response_data['debug_info']['étapes'].append({
+                'étape': 'authentification',
+                'statut': 'succès'
+            })
+            
+            # Informations de connexion réussie
+            response_data['success'] = True
+            response_data['access'] = str(refresh.access_token)
+            response_data['refresh'] = str(refresh)
+            response_data['user_id'] = auth_user.id
+            response_data['email'] = auth_user.email
+            response_data['name'] = auth_user.name
+            response_data['role'] = auth_user.role
+            
+            return Response(response_data)
+        else:
+            # Authentification échouée
+            response_data['debug_info']['authentification'] = 'échouée'
+            
+            # Vérification manuelle de mot de passe
+            if hasattr(user, 'check_password'):
+                pw_check = user.check_password(password)
+                response_data['debug_info']['check_password'] = pw_check
+            else:
+                response_data['debug_info']['check_password'] = 'méthode non disponible'
+            
+            response_data['debug_info']['étapes'].append({
+                'étape': 'authentification',
+                'statut': 'échec',
+                'raison': 'Mot de passe incorrect ou problème avec authenticate()'
+            })
+            
+            response_data['error'] = 'Identifiants incorrects'
+            return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
+    except Exception as e:
+        response_data['debug_info']['étapes'].append({
+            'étape': 'authentification',
+            'statut': 'erreur',
+            'exception': str(e),
+            'traceback': str(sys.exc_info())
+        })
+        response_data['error'] = f'Erreur lors de l\'authentification: {str(e)}'
+        return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

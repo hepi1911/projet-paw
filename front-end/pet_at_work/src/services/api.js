@@ -53,21 +53,43 @@ api.interceptors.response.use(
 export const apiService = {
   // Authentification
   async login(email, password) {
-    const response = await api.post('/login/', {
-      email: email,
-      password
-    })
-    // Stocker le token dans sessionStorage
-    sessionStorage.setItem('token', response.data.access)
-    // Stocker les informations utilisateur
-    sessionStorage.setItem('user', JSON.stringify(response.data))
-    // Afficher le token pour le débogage
-    console.log('Token saved:', response.data.access)
-    console.log('Authorization header will be:', `Bearer ${response.data.access}`)
-    // Retourner les données nécessaires
-    return {
-      token: response.data.access,
-      user: response.data
+    try {
+      const response = await api.post('/login/', {
+        email: email,
+        password
+      })
+      // Stocker le token dans sessionStorage
+      sessionStorage.setItem('token', response.data.access)
+      // Stocker les informations utilisateur
+      sessionStorage.setItem('user', JSON.stringify(response.data))
+      // Afficher le token pour le débogage
+      console.log('Token saved:', response.data.access)
+      console.log('Authorization header will be:', `Bearer ${response.data.access}`)
+      // Retourner les données nécessaires
+      return {
+        token: response.data.access,
+        user: response.data
+      }
+    } catch (error) {
+      console.error('Erreur de connexion dans api.js:', error)
+      // Si l'authentification échoue (erreur 401), essayez l'endpoint de débogage
+      if (error.response && error.response.status === 401) {
+        try {
+          // Appeler l'endpoint de débogage pour obtenir plus d'informations
+          console.log('Tentative de diagnostic via debug-login...')
+          const debugResponse = await api.post('/debug-login/', {
+            email: email,
+            password
+          })
+          console.log('Résultat du diagnostic:', debugResponse.data)
+          // L'erreur est toujours lancée pour que l'utilisateur voit un message d'erreur
+          throw error
+        } catch (debugError) {
+          console.error('Erreur lors du diagnostic:', debugError)
+          throw error // Relancer l'erreur originale
+        }
+      }
+      throw error
     }
   },
   

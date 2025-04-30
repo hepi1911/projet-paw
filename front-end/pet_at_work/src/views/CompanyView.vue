@@ -1,5 +1,11 @@
 <template>
   <div class="view-container">
+    <!-- Barre de notification pour les nouvelles demandes -->
+    <div v-if="showNotificationBar" class="notification-bar">
+      <span>{{ notification }}</span>
+      <button class="close-btn" @click="showNotificationBar = false">&times;</button>
+    </div>
+    
     <div class="company-dashboard">
       <h1>Tableau de bord Company</h1>
       
@@ -170,6 +176,8 @@ const loading = ref(true);
 const isUpdating = ref(null);
 const showProfileModal = ref(false);
 const isUpdatingProfile = ref(false);
+const notification = ref('');
+const showNotificationBar = ref(false);
 const profileForm = ref({
   name: '',
   email: '',
@@ -217,8 +225,8 @@ const loadData = async () => {
   try {
     loading.value = true;
     
-    // Récupérer l'ID de l'utilisateur connecté depuis le localStorage
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    // Récupérer l'ID de l'utilisateur connecté depuis le sessionStorage (au lieu de localStorage)
+    const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
     const currentUserId = userData.user_id;
     
     if (!currentUserId) {
@@ -243,6 +251,12 @@ const loadData = async () => {
           console.error('Erreur lors de la récupération des informations du pet sitter:', error);
         }
       }
+    }
+    
+    // Vérifier s'il y a de nouvelles demandes et afficher une notification
+    const pendingCount = pendingBookings.value.length;
+    if (pendingCount > 0) {
+      showNotification(`Vous avez ${pendingCount} nouvelle(s) demande(s) de réservation en attente.`);
     }
   } catch (error) {
     console.error('Erreur lors du chargement des données:', error);
@@ -390,6 +404,17 @@ const getServiceLabel = (serviceType) => {
 // Rediriger vers la page de profil
 const goToProfile = () => {
   router.push('/profile');
+};
+
+// Afficher une notification
+const showNotification = (message) => {
+  notification.value = message;
+  showNotificationBar.value = true;
+  
+  // Masquer la notification après 5 secondes
+  setTimeout(() => {
+    showNotificationBar.value = false;
+  }, 5000);
 };
 
 // Charger les données au montage du composant
@@ -591,6 +616,25 @@ button:disabled {
   border-radius: 8px;
   margin: 2rem 0;
   color: #6c757d;
+}
+
+/* Notification bar */
+.notification-bar {
+  background-color: #3498db;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+.notification-bar .close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
 }
 
 /* Responsive adjustments */

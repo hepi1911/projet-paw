@@ -24,6 +24,13 @@ class AnimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Animal
         fields = '__all__'
+        extra_kwargs = {
+            'name': {'required': True, 'error_messages': {'required': 'Le nom de l\'animal est obligatoire'}},
+            'owner': {'required': True, 'error_messages': {'required': 'Le propriétaire est obligatoire'}},
+            'breed': {'required': False},
+            'age': {'required': False},
+            'maladie': {'required': False}
+        }
 
 class BookingSerializer(serializers.ModelSerializer):
     total_days = serializers.IntegerField(read_only=True)

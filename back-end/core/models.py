@@ -4,7 +4,15 @@ from django.utils import timezone
 from datetime import datetime
 
 class CustomUserManager(BaseUserManager):
+    """
+    Gestionnaire personnalisé pour le modèle User permettant la création d'utilisateurs et de superutilisateurs.
+    Custom manager for the User model allowing the creation of users and superusers.
+    """
     def create_user(self, email, name, role, password=None, **extra_fields):
+        """
+        Crée et sauvegarde un nouvel utilisateur avec l'email, le nom, le rôle et le mot de passe donnés.
+        Creates and saves a new user with the given email, name, role and password.
+        """
         if not email:
             raise ValueError('L\'email est obligatoire')
         if not name:
@@ -22,6 +30,10 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, name, role, password=None, **extra_fields):
+        """
+        Crée et sauvegarde un superutilisateur avec l'email, le nom, le rôle et le mot de passe donnés.
+        Creates and saves a superuser with the given email, name, role and password.
+        """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
@@ -33,6 +45,10 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, name, role, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+    """
+    Modèle d'utilisateur personnalisé avec différents rôles: propriétaire d'animal, pet-sitter, ou entreprise.
+    Custom user model with different roles: pet owner, pet sitter, or company.
+    """
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=20, choices=[
@@ -74,6 +90,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['name', 'role']
 
     def clean(self):
+        """
+        Valide les champs en fonction du rôle de l'utilisateur.
+        Validates fields based on the user's role.
+        """
         from django.core.exceptions import ValidationError
 
         # Ignorer les validations pour les superutilisateurs
@@ -101,13 +121,25 @@ class User(AbstractBaseUser, PermissionsMixin):
                 raise ValidationError('Companies should not have experience')
 
     def save(self, *args, **kwargs):
+        """
+        Sauvegarde l'utilisateur après validation des champs.
+        Saves the user after validating the fields.
+        """
         self.clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
+        """
+        Renvoie l'adresse e-mail comme représentation textuelle de l'utilisateur.
+        Returns the email as string representation of the user.
+        """
         return self.email
 
 class Animal(models.Model):
+    """
+    Modèle pour les animaux de compagnie enregistrés dans l'application.
+    Model for pets registered in the application.
+    """
     owner = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'petowner'})
     name = models.CharField(max_length=100)
     breed = models.CharField(max_length=100, default="Non spécifiée")
@@ -115,9 +147,17 @@ class Animal(models.Model):
     maladie = models.CharField(max_length=200, null=True, blank=True, default="Aucune maladie connue")
 
     def __str__(self):
+        """
+        Renvoie une représentation textuelle de l'animal (nom et race).
+        Returns a string representation of the animal (name and breed).
+        """
         return f"{self.name} ({self.breed})"
 
 class Booking(models.Model):
+    """
+    Modèle pour les réservations de garde d'animaux entre propriétaires et pet-sitters.
+    Model for pet sitting bookings between pet owners and pet sitters.
+    """
     STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('accepted', 'Acceptée'),
@@ -134,7 +174,10 @@ class Booking(models.Model):
     
     @property
     def total_days(self):
-        """Calcule le nombre total de jours de garde"""
+        """
+        Calcule le nombre total de jours de garde (inclut le premier et le dernier jour).
+        Calculates the total number of days for the booking (includes first and last day).
+        """
         start_date = self.start_date
         end_date = self.end_date
         delta = end_date - start_date
@@ -142,13 +185,24 @@ class Booking(models.Model):
     
     @property
     def total_price(self):
-        """Calcule le prix total (10€ par jour)"""
+        """
+        Calcule le prix total de la réservation (10€ par jour).
+        Calculates the total price of the booking (10€ per day).
+        """
         return self.total_days * 10
     
     def __str__(self):
+        """
+        Renvoie une représentation textuelle de la réservation.
+        Returns a string representation of the booking.
+        """
         return f"{self.animal.name} avec {self.sitter.name} du {self.start_date} au {self.end_date}"
 
 class CompanyBooking(models.Model):
+    """
+    Modèle pour les réservations de services entre propriétaires d'animaux et entreprises.
+    Model for service bookings between pet owners and companies.
+    """
     STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('accepted', 'Acceptée'),
@@ -165,7 +219,10 @@ class CompanyBooking(models.Model):
 
     @property
     def total_days(self):
-        """Calcule le nombre total de jours de garde"""
+        """
+        Calcule le nombre total de jours de garde (inclut le premier et le dernier jour).
+        Calculates the total number of days for the booking (includes first and last day).
+        """
         start_date = self.start_date
         end_date = self.end_date
         delta = end_date - start_date
@@ -173,13 +230,24 @@ class CompanyBooking(models.Model):
     
     @property
     def total_price(self):
-        """Calcule le prix total (10€ par jour)"""
+        """
+        Calcule le prix total de la réservation (10€ par jour).
+        Calculates the total price of the booking (10€ per day).
+        """
         return self.total_days * 10
 
     def __str__(self):
+        """
+        Renvoie une représentation textuelle de la réservation d'entreprise.
+        Returns a string representation of the company booking.
+        """
         return f"{self.animal.name} à {self.company.name} du {self.start_date} au {self.end_date}"
 
 class PetSitterCompanyBooking(models.Model):
+    """
+    Modèle pour les réservations de services professionnels entre pet-sitters et entreprises.
+    Model for professional service bookings between pet sitters and companies.
+    """
     STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('accepted', 'Acceptée'),
@@ -203,10 +271,17 @@ class PetSitterCompanyBooking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """
+        Renvoie une représentation textuelle de la réservation entre pet-sitter et entreprise.
+        Returns a string representation of the booking between pet sitter and company.
+        """
         return f"{self.petsitter.name} avec {self.company.name} ({self.get_service_type_display()}) du {self.start_date} au {self.end_date}"
 
 class Payment(models.Model):
-    """Modèle pour stocker les informations de paiement"""
+    """
+    Modèle pour stocker les informations de paiement pour les réservations.
+    Model for storing payment information for bookings.
+    """
     PAYMENT_STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('completed', 'Complété'),
@@ -229,6 +304,10 @@ class Payment(models.Model):
     transaction_id = models.CharField(max_length=100, null=True, blank=True)
     
     def __str__(self):
+        """
+        Renvoie une représentation textuelle du paiement.
+        Returns a string representation of the payment.
+        """
         if self.booking:
             return f"Paiement de {self.amount}€ pour la réservation #{self.booking.id}"
         elif self.company_booking:

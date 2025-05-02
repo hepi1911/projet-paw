@@ -11,54 +11,56 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import random
 import string
+import logging
+import sys
 
 from .models import Animal, Booking, CompanyBooking, PetSitterCompanyBooking, Payment
 from .serializers import UserSerializer, AnimalSerializer, BookingSerializer, CompanyBookingSerializer, PetSitterCompanyBookingSerializer, PaymentSerializer
 
 User = get_user_model()
 
-# Fonction d'aide pour envoyer des emails à chaque étape du processus de réservation
+# Helper function to send emails at each step of the booking process
 def send_booking_status_email(booking, status, booking_type='standard'):
     """
-    Envoie un email de notification pour informer les utilisateurs d'un changement de statut de réservation
+    Sends a notification email to inform users about a change in booking status.
     
     Args:
-        booking: L'objet de réservation (Booking ou CompanyBooking)
-        status: Le nouveau statut de la réservation
-        booking_type: Le type de réservation ('standard', 'company', ou 'petsitter_company')
+        booking: The booking object (Booking, CompanyBooking or PetSitterCompanyBooking)
+        status: The new status of the booking
+        booking_type: The type of booking ('standard', 'company', or 'petsitter_company')
     """
     try:
-        # Préparer les détails selon le type de réservation
+        # Prepare details based on booking type
         if booking_type == 'standard':
-            # Réservation standard (pet owner -> pet sitter)
+            # Standard booking (pet owner -> pet sitter)
             pet_owner = booking.animal.owner
             pet_sitter = booking.sitter
             animal = booking.animal
             start_date = booking.start_date
             end_date = booking.end_date
             
-            # Email au propriétaire de l'animal
-            owner_subject = f"Mise à jour de votre réservation - {animal.name}"
-            owner_message = f"""Bonjour {pet_owner.name},
+            # Email to pet owner
+            owner_subject = f"Booking update - {animal.name}"
+            owner_message = f"""Hello {pet_owner.name},
 
-Le statut de votre réservation pour {animal.name} avec {pet_sitter.name} a été mis à jour.
+The status of your booking for {animal.name} with {pet_sitter.name} has been updated.
 
-Nouveau statut: {status}
-Dates: {start_date} au {end_date}
+New status: {status}
+Dates: {start_date} to {end_date}
 
 """
             if status == 'pending':
-                owner_message += "Votre demande de réservation a été enregistrée et est en attente de confirmation par le pet sitter."
+                owner_message += "Your booking request has been registered and is awaiting confirmation from the pet sitter."
             elif status == 'accepted':
-                owner_message += "Votre réservation a été acceptée par le pet sitter. Vous pouvez maintenant procéder au paiement."
+                owner_message += "Your booking has been accepted by the pet sitter. You can now proceed to payment."
             elif status == 'refused':
-                owner_message += "Nous sommes désolés, mais votre demande de réservation a été refusée par le pet sitter."
+                owner_message += "We're sorry, but your booking request has been declined by the pet sitter."
             elif status == 'cancelled':
-                owner_message += "Votre réservation a été annulée comme demandé."
+                owner_message += "Your booking has been cancelled as requested."
             elif status == 'paid':
-                owner_message += "Votre paiement a été confirmé. Votre réservation est maintenant finalisée."
+                owner_message += "Your payment has been confirmed. Your booking is now finalized."
             
-            owner_message += "\n\nMerci d'utiliser Pet at Work!"
+            owner_message += "\n\nThank you for using Pet at Work!"
             
             send_mail(
                 owner_subject,
@@ -68,28 +70,28 @@ Dates: {start_date} au {end_date}
                 fail_silently=True,
             )
             
-            # Email au pet sitter
-            sitter_subject = f"Mise à jour de réservation - {animal.name}"
-            sitter_message = f"""Bonjour {pet_sitter.name},
+            # Email to pet sitter
+            sitter_subject = f"Booking update - {animal.name}"
+            sitter_message = f"""Hello {pet_sitter.name},
 
-Le statut d'une réservation pour l'animal {animal.name} de {pet_owner.name} a été mis à jour.
+The status of a booking for the pet {animal.name} from {pet_owner.name} has been updated.
 
-Nouveau statut: {status}
-Dates: {start_date} au {end_date}
+New status: {status}
+Dates: {start_date} to {end_date}
 
 """
             if status == 'pending':
-                sitter_message += "Une nouvelle demande de réservation a été enregistrée. Veuillez l'accepter ou la refuser depuis votre espace personnel."
+                sitter_message += "A new booking request has been registered. Please accept or decline it from your personal area."
             elif status == 'accepted':
-                sitter_message += "Vous avez accepté cette réservation. Le propriétaire de l'animal a été notifié."
+                sitter_message += "You have accepted this booking. The pet owner has been notified."
             elif status == 'refused':
-                sitter_message += "Vous avez refusé cette réservation. Le propriétaire de l'animal a été notifié."
+                sitter_message += "You have declined this booking. The pet owner has been notified."
             elif status == 'cancelled':
-                sitter_message += "Cette réservation a été annulée par le propriétaire de l'animal."
+                sitter_message += "This booking has been cancelled by the pet owner."
             elif status == 'paid':
-                sitter_message += "Le paiement pour cette réservation a été confirmé. La réservation est maintenant finalisée."
+                sitter_message += "Payment for this booking has been confirmed. The booking is now finalized."
             
-            sitter_message += "\n\nMerci d'utiliser Pet at Work!"
+            sitter_message += "\n\nThank you for using Pet at Work!"
             
             send_mail(
                 sitter_subject,
@@ -100,35 +102,35 @@ Dates: {start_date} au {end_date}
             )
             
         elif booking_type == 'company':
-            # Réservation auprès d'une entreprise (pet owner -> company)
+            # Company booking (pet owner -> company)
             pet_owner = booking.animal.owner
             company = booking.company
             animal = booking.animal
             start_date = booking.start_date
             end_date = booking.end_date
             
-            # Email au propriétaire de l'animal
-            owner_subject = f"Mise à jour de votre réservation d'entreprise - {animal.name}"
-            owner_message = f"""Bonjour {pet_owner.name},
+            # Email to pet owner
+            owner_subject = f"Company booking update - {animal.name}"
+            owner_message = f"""Hello {pet_owner.name},
 
-Le statut de votre réservation pour {animal.name} auprès de {company.name} a été mis à jour.
+The status of your booking for {animal.name} with {company.name} has been updated.
 
-Nouveau statut: {status}
-Dates: {start_date} au {end_date}
+New status: {status}
+Dates: {start_date} to {end_date}
 
 """
             if status == 'pending':
-                owner_message += "Votre demande de réservation a été enregistrée et est en attente de confirmation par l'entreprise."
+                owner_message += "Your booking request has been registered and is awaiting confirmation from the company."
             elif status == 'accepted':
-                owner_message += "Votre réservation a été acceptée par l'entreprise. Vous pouvez maintenant procéder au paiement."
+                owner_message += "Your booking has been accepted by the company. You can now proceed to payment."
             elif status == 'refused':
-                owner_message += "Nous sommes désolés, mais votre demande de réservation a été refusée par l'entreprise."
+                owner_message += "We're sorry, but your booking request has been declined by the company."
             elif status == 'cancelled':
-                owner_message += "Votre réservation a été annulée comme demandé."
+                owner_message += "Your booking has been cancelled as requested."
             elif status == 'paid':
-                owner_message += "Votre paiement a été confirmé. Votre réservation est maintenant finalisée."
+                owner_message += "Your payment has been confirmed. Your booking is now finalized."
             
-            owner_message += "\n\nMerci d'utiliser Pet at Work!"
+            owner_message += "\n\nThank you for using Pet at Work!"
             
             send_mail(
                 owner_subject,
@@ -138,28 +140,28 @@ Dates: {start_date} au {end_date}
                 fail_silently=True,
             )
             
-            # Email à l'entreprise
-            company_subject = f"Mise à jour de réservation - {animal.name}"
-            company_message = f"""Bonjour {company.name},
+            # Email to company
+            company_subject = f"Booking update - {animal.name}"
+            company_message = f"""Hello {company.name},
 
-Le statut d'une réservation pour l'animal {animal.name} de {pet_owner.name} a été mis à jour.
+The status of a booking for the pet {animal.name} from {pet_owner.name} has been updated.
 
-Nouveau statut: {status}
-Dates: {start_date} au {end_date}
+New status: {status}
+Dates: {start_date} to {end_date}
 
 """
             if status == 'pending':
-                company_message += "Une nouvelle demande de réservation a été enregistrée. Veuillez l'accepter ou la refuser depuis votre espace entreprise."
+                company_message += "A new booking request has been registered. Please accept or decline it from your company dashboard."
             elif status == 'accepted':
-                company_message += "Vous avez accepté cette réservation. Le propriétaire de l'animal a été notifié."
+                company_message += "You have accepted this booking. The pet owner has been notified."
             elif status == 'refused':
-                company_message += "Vous avez refusé cette réservation. Le propriétaire de l'animal a été notifié."
+                company_message += "You have declined this booking. The pet owner has been notified."
             elif status == 'cancelled':
-                company_message += "Cette réservation a été annulée par le propriétaire de l'animal."
+                company_message += "This booking has been cancelled by the pet owner."
             elif status == 'paid':
-                company_message += "Le paiement pour cette réservation a été confirmé. La réservation est maintenant finalisée."
+                company_message += "Payment for this booking has been confirmed. The booking is now finalized."
             
-            company_message += "\n\nMerci d'utiliser Pet at Work!"
+            company_message += "\n\nThank you for using Pet at Work!"
             
             send_mail(
                 company_subject,
@@ -170,35 +172,35 @@ Dates: {start_date} au {end_date}
             )
             
         elif booking_type == 'petsitter_company':
-            # Réservation pet sitter -> company
+            # Pet sitter -> company booking
             pet_sitter = booking.petsitter
             company = booking.company
             start_date = booking.start_date
             end_date = booking.end_date
             
-            # Email au pet sitter
-            sitter_subject = f"Mise à jour de votre réservation avec {company.name}"
-            sitter_message = f"""Bonjour {pet_sitter.name},
+            # Email to pet sitter
+            sitter_subject = f"Booking update with {company.name}"
+            sitter_message = f"""Hello {pet_sitter.name},
 
-Le statut de votre réservation auprès de {company.name} a été mis à jour.
+The status of your booking with {company.name} has been updated.
 
-Nouveau statut: {status}
-Dates: {start_date} au {end_date}
+New status: {status}
+Dates: {start_date} to {end_date}
 Service: {booking.get_service_type_display()}
 
 """
             if status == 'pending':
-                sitter_message += "Votre demande de réservation a été enregistrée et est en attente de confirmation par l'entreprise."
+                sitter_message += "Your booking request has been registered and is awaiting confirmation from the company."
             elif status == 'accepted':
-                sitter_message += "Votre réservation a été acceptée par l'entreprise."
+                sitter_message += "Your booking has been accepted by the company."
             elif status == 'refused':
-                sitter_message += "Nous sommes désolés, mais votre demande de réservation a été refusée par l'entreprise."
+                sitter_message += "We're sorry, but your booking request has been declined by the company."
             elif status == 'cancelled':
-                sitter_message += "Votre réservation a été annulée comme demandé."
+                sitter_message += "Your booking has been cancelled as requested."
             elif status == 'finished':
-                sitter_message += "Votre réservation est maintenant terminée."
+                sitter_message += "Your booking is now completed."
             
-            sitter_message += "\n\nMerci d'utiliser Pet at Work!"
+            sitter_message += "\n\nThank you for using Pet at Work!"
             
             send_mail(
                 sitter_subject,
@@ -208,29 +210,29 @@ Service: {booking.get_service_type_display()}
                 fail_silently=True,
             )
             
-            # Email à l'entreprise
-            company_subject = f"Mise à jour de réservation avec {pet_sitter.name}"
-            company_message = f"""Bonjour {company.name},
+            # Email to company
+            company_subject = f"Booking update with {pet_sitter.name}"
+            company_message = f"""Hello {company.name},
 
-Le statut d'une réservation de la part du pet sitter {pet_sitter.name} a été mis à jour.
+The status of a booking from pet sitter {pet_sitter.name} has been updated.
 
-Nouveau statut: {status}
-Dates: {start_date} au {end_date}
+New status: {status}
+Dates: {start_date} to {end_date}
 Service: {booking.get_service_type_display()}
 
 """
             if status == 'pending':
-                company_message += "Une nouvelle demande de réservation a été enregistrée. Veuillez l'accepter ou la refuser depuis votre espace entreprise."
+                company_message += "A new booking request has been registered. Please accept or decline it from your company dashboard."
             elif status == 'accepted':
-                company_message += "Vous avez accepté cette réservation. Le pet sitter a été notifié."
+                company_message += "You have accepted this booking. The pet sitter has been notified."
             elif status == 'refused':
-                company_message += "Vous avez refusé cette réservation. Le pet sitter a été notifié."
+                company_message += "You have declined this booking. The pet sitter has been notified."
             elif status == 'cancelled':
-                company_message += "Cette réservation a été annulée par le pet sitter."
+                company_message += "This booking has been cancelled by the pet sitter."
             elif status == 'finished':
-                company_message += "Cette réservation est maintenant terminée."
+                company_message += "This booking is now completed."
             
-            company_message += "\n\nMerci d'utiliser Pet at Work!"
+            company_message += "\n\nThank you for using Pet at Work!"
             
             send_mail(
                 company_subject,
@@ -241,10 +243,13 @@ Service: {booking.get_service_type_display()}
             )
     
     except Exception as e:
-        print(f"Erreur lors de l'envoi de l'email de notification: {str(e)}")
-        # Ne pas faire échouer l'opération si l'envoi d'email échoue
+        print(f"Error sending notification email: {str(e)}")
+        # Don't fail the operation if email sending fails
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet to manage users (creation, modification, deletion).
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend]
@@ -252,6 +257,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def debug_filter(self, request):
+        """
+        Debug method to filter users by role.
+        """
         role = request.query_params.get('role')
         if role:
             queryset = User.objects.filter(role=role)
@@ -263,26 +271,26 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def available_companies(self, request):
         """
-        Renvoie uniquement les compagnies qui ne sont pas complètes (capacité disponible)
+        Returns only companies that are not full (available capacity).
         """
-        # Récupérer toutes les compagnies
+        # Get all companies
         companies = User.objects.filter(role='company')
         
-        # Liste pour stocker les compagnies avec de la capacité disponible
+        # List to store companies with available capacity
         available_companies = []
         
         for company in companies:
-            # Vérifier si la compagnie a défini une capacité
+            # Check if the company has defined a capacity
             if not company.capacity or company.capacity <= 0:
                 continue
                 
-            # Compter les réservations acceptées actuelles
+            # Count current accepted bookings
             accepted_bookings_count = CompanyBooking.objects.filter(
                 company=company, 
                 status='accepted'
             ).count()
             
-            # Vérifier si la compagnie a encore de la capacité disponible
+            # Check if the company still has available capacity
             if accepted_bookings_count < company.capacity:
                 available_companies.append(company)
         
@@ -291,18 +299,21 @@ class UserViewSet(viewsets.ModelViewSet):
         
     @action(detail=False, methods=['put'], permission_classes=[IsAuthenticated])
     def profile(self, request):
+        """
+        Allows the logged-in user to update their profile, including password.
+        """
         user = request.user
         serializer = self.get_serializer(user, data=request.data, partial=True)
         
         if serializer.is_valid():
             if 'new_password' in request.data:
-                # Vérifier si la méthode check_password existe sur l'objet user
+                # Check if the check_password method exists on the user object
                 if hasattr(user, 'check_password') and callable(getattr(user, 'check_password')):
                     if not user.check_password(request.data.get('current_password', '')):
-                        return Response({'error': 'Mot de passe actuel incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+                        return Response({'error': 'Incorrect current password'}, status=status.HTTP_400_BAD_REQUEST)
                     user.set_password(request.data['new_password'])
                 else:
-                    return Response({'error': 'Méthode de vérification du mot de passe non disponible'}, 
+                    return Response({'error': 'Password verification method not available'}, 
                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             serializer.save()
             return Response(serializer.data)
@@ -310,11 +321,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def password_reset(self, request):
+        """
+        Initiates the password reset process by sending a code to the user.
+        """
         email = request.data.get('email').lower()
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({'message': 'Si cet email existe, un code de réinitialisation sera envoyé.'})
+            return Response({'message': 'If this email exists, a reset code will be sent.'})
 
         reset_code = ''.join(random.choices(string.digits, k=6))
         user.reset_code = reset_code
@@ -322,32 +336,38 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
 
         send_mail(
-            'Réinitialisation de mot de passe',
-            f'Votre code de réinitialisation est : {reset_code}\nCe code expirera dans 15 minutes.',
+            'Password Reset',
+            f'Your reset code is: {reset_code}\nThis code will expire in 15 minutes.',
             settings.DEFAULT_FROM_EMAIL,
             [email],
             fail_silently=False,
         )
 
-        return Response({'message': 'Code de réinitialisation envoyé'})
+        return Response({'message': 'Reset code sent'})
 
     @action(detail=False, methods=['post'])
     def verify_reset_code(self, request):
+        """
+        Verifies the validity of the password reset code.
+        """
         email = request.data.get('email').lower()
         code = request.data.get('code')
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({'error': 'Code invalide'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.reset_code or user.reset_code != code or user.reset_code_expiry < timezone.now():
-            return Response({'error': 'Code invalide ou expiré'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid or expired code'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'message': 'Code validé'})
+        return Response({'message': 'Code validated'})
 
     @action(detail=False, methods=['post'])
     def reset_password(self, request):
+        """
+        Resets the password after validating the reset code.
+        """
         email = request.data.get('email').lower()
         code = request.data.get('code')
         new_password = request.data.get('new_password')
@@ -355,40 +375,42 @@ class UserViewSet(viewsets.ModelViewSet):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({'error': 'Données invalides'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.reset_code or user.reset_code != code or user.reset_code_expiry < timezone.now():
-            return Response({'error': 'Code invalide ou expiré'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid or expired code'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.reset_code = None
         user.reset_code_expiry = None
         user.save()
 
-        return Response({'message': 'Mot de passe réinitialisé avec succès'})
+        return Response({'message': 'Password reset successful'})
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def companies(self, request):
         """
-        Permet aux pet sitters de lister toutes les compagnies disponibles
-        pour faire des réservations
+        Allows pet sitters to list all available companies to make bookings.
         """
         user = request.user
         
-        # Vérifier que l'utilisateur est un pet sitter
+        # Check that the user is a pet sitter
         if user.role != 'petsitter' and not (user.is_staff or user.is_superuser):
             return Response(
-                {'error': 'Seuls les pet sitters peuvent accéder à cette ressource'}, 
+                {'error': 'Only pet sitters can access this resource'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer toutes les compagnies
+        # Get all companies
         companies = User.objects.filter(role='company')
         
         serializer = self.get_serializer(companies, many=True)
         return Response(serializer.data)
 
 class AnimalViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet to manage pets (creation, modification, deletion).
+    """
     queryset = Animal.objects.all()
     serializer_class = AnimalSerializer
     permission_classes = [IsAuthenticated]
@@ -396,40 +418,41 @@ class AnimalViewSet(viewsets.ModelViewSet):
     filterset_fields = ['owner']
 
     def get_queryset(self):
+        """
+        Limits visible animals based on user role.
+        """
         user = self.request.user
         
-        # Les administrateurs peuvent voir tous les animaux
+        # Administrators can see all animals
         if user.is_staff or user.is_superuser:
             return Animal.objects.all()
         
-        # Les propriétaires d'animaux ne voient que leurs propres animaux
+        # Pet owners can only see their own animals
         if user.role == 'petowner':
             return Animal.objects.filter(owner=user)
         
-        # Les pet sitters et les compagnies peuvent voir tous les animaux
-        # pour faciliter la prise de réservation
-        # ou on pourrait restreindre cette vue aux animaux liés à leurs réservations
+        # Pet sitters and companies can see all animals
+        # to facilitate booking management
         return Animal.objects.all()
 
     def create(self, request, *args, **kwargs):
         """
-        Surcharge de la méthode create pour définir automatiquement le propriétaire
-        de l'animal comme étant l'utilisateur connecté (si c'est un pet owner)
+        Creates a new animal and automatically assigns it to the logged-in owner.
         """
         user = request.user
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner' and not (user.is_staff or user.is_superuser):
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent ajouter des animaux'}, 
+                {'error': 'Only pet owners can add animals'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Ajouter le propriétaire actuel aux données
+        # Add the current owner to the data
         data = request.data.copy()
         data['owner'] = user.id
         
-        # Créer l'animal avec les données complétées
+        # Create the animal with the completed data
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -439,24 +462,27 @@ class AnimalViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_animals(self, request):
         """
-        Renvoie la liste des animaux appartenant à l'utilisateur connecté (pet owner)
+        Returns the list of animals belonging to the logged-in owner.
         """
         user = request.user
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner':
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent accéder à cette ressource'}, 
+                {'error': 'Only pet owners can access this resource'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer tous les animaux du pet owner
+        # Get all animals of the pet owner
         animals = Animal.objects.filter(owner=user)
         
         serializer = self.get_serializer(animals, many=True)
         return Response(serializer.data)
 
 class BookingViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet to manage bookings between pet owners and pet sitters.
+    """
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
@@ -464,115 +490,117 @@ class BookingViewSet(viewsets.ModelViewSet):
     filterset_fields = ['status']
 
     def get_queryset(self):
+        """
+        Filters bookings based on the user's role.
+        """
         user = self.request.user
         
-        # Les administrateurs peuvent tout voir
+        # Administrators can see all bookings
         if user.is_staff or user.is_superuser:
             return Booking.objects.all()
         
-        # Les propriétaires d'animaux voient les réservations de leurs animaux
+        # Pet owners can see bookings for their animals
         if user.role == 'petowner':
             return Booking.objects.filter(animal__owner=user)
         
-        # Les pet sitters voient les réservations qui les concernent
+        # Pet sitters can see bookings that concern them
         elif user.role == 'petsitter':
             return Booking.objects.filter(sitter=user)
         
-        # Par défaut, retourner une queryset vide
+        # By default, return an empty queryset
         return Booking.objects.none()
 
     def create(self, request, *args, **kwargs):
         """
-        Surcharge de la méthode create pour valider que l'animal appartient bien
-        au pet owner qui fait la réservation
+        Override create method to validate that the animal belongs to the pet owner making the booking.
         """
         user = request.user
         data = request.data.copy()
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner' and not (user.is_staff or user.is_superuser):
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent créer des réservations'}, 
+                {'error': 'Only pet owners can create bookings'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Vérifier que l'animal appartient bien au pet owner
+        # Verify that the animal belongs to the pet owner
         animal_id = data.get('animal')
         if animal_id:
             try:
                 animal = Animal.objects.get(id=animal_id)
                 if animal.owner.id != user.id and not (user.is_staff or user.is_superuser):
                     return Response(
-                        {'error': 'Vous ne pouvez réserver que pour vos propres animaux'}, 
+                        {'error': 'You can only book for your own animals'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Récupérer les dates de la nouvelle réservation
+                # Get the dates for the new booking
                 start_date = data.get('start_date')
                 end_date = data.get('end_date')
                 
                 if not start_date or not end_date:
                     return Response(
-                        {'error': 'Les dates de début et de fin sont obligatoires'}, 
+                        {'error': 'Start and end dates are required'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Vérifier si l'animal a déjà une réservation active qui chevauche les dates demandées
+                # Check if the animal already has an active booking that overlaps with the requested dates
                 from django.db.models import Q
                 from datetime import datetime
                 
-                # Convertir les dates en objets datetime pour la comparaison
+                # Convert dates to datetime objects for comparison
                 start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date() if isinstance(start_date, str) else start_date
                 end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date() if isinstance(end_date, str) else end_date
                 
-                # Vérifier les réservations existantes avec le pet sitter qui chevauchent les dates
+                # Check existing bookings with pet sitters that overlap with the dates
                 overlapping_bookings = Booking.objects.filter(
                     animal=animal,
-                    status__in=['pending', 'accepted', 'paid'],  # Exclure les réservations 'cancelled'
+                    status__in=['pending', 'accepted', 'paid'],  # Exclude 'cancelled' bookings
                 ).filter(
-                    # Critères de chevauchement de dates:
-                    # (début1 <= fin2) ET (fin1 >= début2)
+                    # Date overlap criteria:
+                    # (start1 <= end2) AND (end1 >= start2)
                     Q(start_date__lte=end_date_obj) & Q(end_date__gte=start_date_obj)
                 )
                 
                 if overlapping_bookings.exists():
                     return Response(
-                        {'error': 'Cet animal a déjà une réservation qui chevauche ces dates. Veuillez choisir d\'autres dates.'}, 
+                        {'error': 'This animal already has a booking that overlaps with these dates. Please choose other dates.'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Vérifier également si l'animal est réservé auprès d'une compagnie sur les mêmes dates
+                # Also check if the animal is booked with a company on the same dates
                 overlapping_company_bookings = CompanyBooking.objects.filter(
                     animal=animal,
-                    status__in=['pending', 'accepted', 'paid'],  # Exclure les réservations 'cancelled'
+                    status__in=['pending', 'accepted', 'paid'],  # Exclude 'cancelled' bookings
                 ).filter(
-                    # Critères de chevauchement de dates:
-                    # (début1 <= fin2) ET (fin1 >= début2)
+                    # Date overlap criteria:
+                    # (start1 <= end2) AND (end1 >= start2)
                     Q(start_date__lte=end_date_obj) & Q(end_date__gte=start_date_obj)
                 )
                 
                 if overlapping_company_bookings.exists():
                     return Response(
-                        {'error': 'Cet animal a déjà une réservation auprès d\'une compagnie qui chevauche ces dates. Veuillez choisir d\'autres dates.'}, 
+                        {'error': 'This animal already has a company booking that overlaps with these dates. Please choose other dates.'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
             except Animal.DoesNotExist:
                 return Response(
-                    {'error': 'Animal introuvable'}, 
+                    {'error': 'Animal not found'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
         else:
             return Response(
-                {'error': 'Veuillez spécifier un animal pour la réservation'}, 
+                {'error': 'Please specify an animal for the booking'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Créer la réservation
+        # Create the booking
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            # Envoyer un email de notification
+            # Send notification email
             send_booking_status_email(serializer.instance, serializer.instance.status)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -580,18 +608,18 @@ class BookingViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_bookings(self, request):
         """
-        Renvoie la liste des réservations pour les animaux du pet owner connecté
+        Returns the list of bookings for the connected pet owner's animals.
         """
         user = request.user
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner':
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent accéder à cette ressource'}, 
+                {'error': 'Only pet owners can access this resource'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer toutes les réservations des animaux du pet owner
+        # Get all bookings for the pet owner's animals
         bookings = Booking.objects.filter(animal__owner=user)
         
         serializer = self.get_serializer(bookings, many=True)
@@ -600,15 +628,15 @@ class BookingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def update_status(self, request, pk=None):
         """
-        Permet aux pet sitters et aux propriétaires d'animaux de mettre à jour le statut d'une réservation.
-        - Les pet sitters peuvent accepter ou refuser une réservation (statut 'accepted' ou 'refused')
-        - Les pet owners peuvent annuler leurs réservations (statut 'cancelled')
-        - Les administrateurs peuvent modifier n'importe quel statut
+        Allows pet sitters and pet owners to update a booking's status.
+        - Pet sitters can accept or decline a booking (status 'accepted' or 'refused')
+        - Pet owners can cancel their bookings (status 'cancelled')
+        - Administrators can modify any status
         """
         booking = self.get_object()
         user = request.user
         
-        # Vérifier que l'utilisateur est soit le pet sitter concerné, soit le propriétaire de l'animal
+        # Verify that the user is either the pet sitter or the animal owner
         is_authorized = (
             (user.role == 'petsitter' and booking.sitter.id == user.id) or
             (user.role == 'petowner' and booking.animal.owner.id == user.id) or
@@ -617,38 +645,38 @@ class BookingViewSet(viewsets.ModelViewSet):
         
         if not is_authorized:
             return Response(
-                {'error': 'Vous n\'êtes pas autorisé à modifier cette réservation'}, 
+                {'error': 'You are not authorized to modify this booking'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer le nouveau statut de la requête
+        # Get the new status from the request
         new_status = request.data.get('status')
         
-        # Vérifier que le statut est valide
+        # Check that the status is valid
         valid_statuses = [status_tuple[0] for status_tuple in Booking.STATUS_CHOICES]
         if new_status not in valid_statuses:
             return Response(
-                {'error': f'Statut invalide. Les statuts valides sont: {", ".join(valid_statuses)}'}, 
+                {'error': f'Invalid status. Valid statuses are: {", ".join(valid_statuses)}'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Vérifier les permissions selon le rôle de l'utilisateur
+        # Check permissions based on the user's role
         if user.role == 'petsitter' and booking.sitter.id == user.id:
-            # Les pet sitters peuvent uniquement accepter ou refuser
+            # Pet sitters can only accept or decline
             if new_status not in ['accepted', 'refused']:
                 return Response(
-                    {'error': 'Les pet sitters ne peuvent modifier le statut qu\'en "accepted" ou "refused"'}, 
+                    {'error': 'Pet sitters can only change the status to "accepted" or "refused"'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
         elif user.role == 'petowner' and booking.animal.owner.id == user.id:
-            # Les pet owners peuvent uniquement annuler
+            # Pet owners can only cancel
             if new_status != 'cancelled':
                 return Response(
-                    {'error': 'Les propriétaires d\'animaux ne peuvent que annuler leurs réservations'}, 
+                    {'error': 'Pet owners can only cancel their bookings'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-        # Si le pet owner annule une réservation, annuler également toutes les réservations associées
+        # If a pet owner cancels a booking, also cancel all associated bookings
         is_pet_owner_cancelling = (
             user.role == 'petowner' and 
             booking.animal.owner.id == user.id and 
@@ -656,7 +684,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         )
         
         if is_pet_owner_cancelling:
-            # Trouver toutes les réservations pet sitter → compagnie associées
+            # Find all pet sitter → company bookings associated
             from .models import PetSitterCompanyBooking
             associated_bookings = PetSitterCompanyBooking.objects.filter(
                 petsitter=booking.sitter,
@@ -664,36 +692,36 @@ class BookingViewSet(viewsets.ModelViewSet):
                 end_date__lte=booking.end_date
             )
             
-            # Annuler toutes ces réservations associées
+            # Cancel all these associated bookings
             for assoc_booking in associated_bookings:
                 assoc_booking.status = 'cancelled'
                 assoc_booking.save()
                 
-                # Envoyer un email pour chaque réservation associée annulée
+                # Send an email for each cancelled associated booking
                 send_booking_status_email(assoc_booking, 'cancelled', booking_type='petsitter_company')
                 
-                # Log pour le débogage
-                print(f"Réservation associée annulée (ID: {assoc_booking.id})")
+                # Debug log
+                print(f"Associated booking cancelled (ID: {assoc_booking.id})")
         
-        # Mettre à jour le statut de la réservation
+        # Update the booking status
         old_status = booking.status
         booking.status = new_status
         booking.save()
         
-        # Envoyer l'email de notification de changement de statut
+        # Send status change notification email
         send_booking_status_email(booking, new_status)
         
-        # Préparer un message de réponse adapté
+        # Prepare an appropriate response message
         status_labels = {
-            'accepted': 'acceptée',
-            'refused': 'refusée', 
-            'cancelled': 'annulée',
-            'paid': 'payée'
+            'accepted': 'accepted',
+            'refused': 'declined', 
+            'cancelled': 'cancelled',
+            'paid': 'paid'
         }
         status_label = status_labels.get(new_status, new_status)
-        message = f"Réservation {status_label} avec succès"
+        message = f"Booking successfully {status_label}"
         
-        # Renvoyer les données mises à jour
+        # Return the updated data
         serializer = self.get_serializer(booking)
         return Response({
             'message': message,
@@ -701,6 +729,9 @@ class BookingViewSet(viewsets.ModelViewSet):
         })
 
 class CompanyBookingViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet to manage bookings between pet owners and companies.
+    """
     queryset = CompanyBooking.objects.all()
     serializer_class = CompanyBookingSerializer
     permission_classes = [IsAuthenticated]
@@ -708,84 +739,86 @@ class CompanyBookingViewSet(viewsets.ModelViewSet):
     filterset_fields = ['status']
 
     def get_queryset(self):
+        """
+        Filters bookings based on the user's role.
+        """
         user = self.request.user
         
-        # Les administrateurs peuvent tout voir
+        # Administrators can see all bookings
         if user.is_staff or user.is_superuser:
             return CompanyBooking.objects.all()
         
-        # Les propriétaires d'animaux voient les réservations de leurs animaux
+        # Pet owners can see bookings for their animals
         if user.role == 'petowner':
             return CompanyBooking.objects.filter(animal__owner=user)
         
-        # Les compagnies voient les réservations qui les concernent
+        # Companies can see bookings that concern them
         elif user.role == 'company':
             return CompanyBooking.objects.filter(company=user)
         
-        # Par défaut, retourner une queryset vide
+        # By default, return an empty queryset
         return CompanyBooking.objects.none()
 
     def create(self, request, *args, **kwargs):
         """
-        Surcharge de la méthode create pour valider que l'animal appartient bien
-        au pet owner qui fait la réservation auprès d'une compagnie
+        Override create method to validate that the animal belongs to the pet owner making the booking with a company.
         """
         user = request.user
         data = request.data.copy()
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner' and not (user.is_staff or user.is_superuser):
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent créer des réservations'}, 
+                {'error': 'Only pet owners can create bookings'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Vérifier que l'animal appartient bien au pet owner
+        # Verify that the animal belongs to the pet owner
         animal_id = data.get('animal')
         if animal_id:
             try:
                 animal = Animal.objects.get(id=animal_id)
                 if animal.owner.id != user.id and not (user.is_staff or user.is_superuser):
                     return Response(
-                        {'error': 'Vous ne pouvez réserver que pour vos propres animaux'}, 
+                        {'error': 'You can only book for your own animals'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Récupérer les dates de la nouvelle réservation
+                # Get the dates for the new booking
                 start_date = data.get('start_date')
                 end_date = data.get('end_date')
                 
                 if not start_date or not end_date:
                     return Response(
-                        {'error': 'Les dates de début et de fin sont obligatoires'}, 
+                        {'error': 'Start and end dates are required'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Vérifier si l'animal a déjà une réservation active qui chevauche les dates demandées
+                # Check if the animal already has an active booking that overlaps with the requested dates
                 from django.db.models import Q
                 from datetime import datetime
                 
-                # Convertir les dates en objets datetime pour la comparaison
+                # Convert dates to datetime objects for comparison
                 start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date() if isinstance(start_date, str) else start_date
                 end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date() if isinstance(end_date, str) else end_date
                 
-                # Vérifier les réservations existantes avec la compagnie qui chevauchent les dates
+                # Check existing company bookings that overlap with the dates
                 overlapping_company_bookings = CompanyBooking.objects.filter(
                     animal=animal,
-                    status__in=['pending', 'accepted', 'paid'],  # Exclure les réservations 'cancelled'
+                    status__in=['pending', 'accepted', 'paid'],  # Exclude 'cancelled' bookings
                 ).filter(
-                    # Critères de chevauchement de dates:
-                    # (début1 <= fin2) ET (fin1 >= début2)
+                    # Date overlap criteria:
+                    # (start1 <= end2) AND (end1 >= start2)
                     Q(start_date__lte=end_date_obj) & Q(end_date__gte=start_date_obj)
                 )
                 
                 if overlapping_company_bookings.exists():
                     return Response(
-                        {'error': 'Cet animal a déjà une réservation auprès d\'une compagnie qui chevauche ces dates. Veuillez choisir d\'autres dates.'}, 
+                        {'error': 'This animal already has a company booking that overlaps with these dates. Please choose other dates.'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Vérifier également si l'animal a une réservation chez un pet sitter sur les mêmes dates
+                # Also check if the animal has a booking with a pet sitter on the same dates
                 overlapping_bookings = Booking.objects.filter(
                     animal=animal,
                     status__in=['pending', 'accepted', 'paid'],
@@ -795,26 +828,26 @@ class CompanyBookingViewSet(viewsets.ModelViewSet):
                 
                 if overlapping_bookings.exists():
                     return Response(
-                        {'error': 'Cet animal a déjà une réservation avec un pet sitter qui chevauche ces dates. Veuillez choisir d\'autres dates.'}, 
+                        {'error': 'This animal already has a booking with a pet sitter that overlaps with these dates. Please choose other dates.'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
             except Animal.DoesNotExist:
                 return Response(
-                    {'error': 'Animal introuvable'}, 
+                    {'error': 'Animal not found'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
         else:
             return Response(
-                {'error': 'Veuillez spécifier un animal pour la réservation'}, 
+                {'error': 'Please specify an animal for the booking'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Créer la réservation
+        # Create the booking
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            # Envoyer un email de notification
+            # Send notification email
             send_booking_status_email(serializer.instance, serializer.instance.status, booking_type='company')
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -822,24 +855,27 @@ class CompanyBookingViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_bookings(self, request):
         """
-        Renvoie la liste des réservations auprès des compagnies pour les animaux du pet owner connecté
+        Returns the list of company bookings for the connected pet owner's animals.
         """
         user = request.user
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner':
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent accéder à cette ressource'}, 
+                {'error': 'Only pet owners can access this resource'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer toutes les réservations des animaux du pet owner
+        # Get all bookings for the pet owner's animals
         bookings = CompanyBooking.objects.filter(animal__owner=user)
         
         serializer = self.get_serializer(bookings, many=True)
         return Response(serializer.data)
 
 class PetSitterCompanyBookingViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet to manage bookings between pet sitters and companies.
+    """
     queryset = PetSitterCompanyBooking.objects.all()
     serializer_class = PetSitterCompanyBookingSerializer
     permission_classes = [IsAuthenticated]
@@ -847,45 +883,48 @@ class PetSitterCompanyBookingViewSet(viewsets.ModelViewSet):
     filterset_fields = ['status', 'service_type']
 
     def get_queryset(self):
+        """
+        Filters bookings based on the user's role.
+        """
         user = self.request.user
         
-        # Les administrateurs peuvent tout voir
+        # Administrators can see all bookings
         if user.is_staff or user.is_superuser:
             return PetSitterCompanyBooking.objects.all()
         
-        # Les pet sitters voient les réservations qui les concernent
+        # Pet sitters can see bookings that concern them
         if user.role == 'petsitter':
             return PetSitterCompanyBooking.objects.filter(petsitter=user)
         
-        # Les compagnies voient les réservations qui les concernent
+        # Companies can see bookings that concern them
         elif user.role == 'company':
             return PetSitterCompanyBooking.objects.filter(company=user)
         
-        # Par défaut, retourner une queryset vide
+        # By default, return an empty queryset
         return PetSitterCompanyBooking.objects.none()
 
     def create(self, request, *args, **kwargs):
         """
-        Surcharge de la méthode create pour définir automatiquement le pet sitter
+        Override create method to automatically set the pet sitter.
         """
         user = request.user
         
-        # Vérifier que l'utilisateur est un pet sitter
+        # Check that the user is a pet sitter
         if user.role != 'petsitter':
             return Response(
-                {'error': 'Seuls les pet sitters peuvent créer ces réservations'}, 
+                {'error': 'Only pet sitters can create these bookings'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Ajouter le pet sitter actuel aux données
+        # Add the current pet sitter to the data
         data = request.data.copy()
         data['petsitter'] = user.id
         
-        # Créer la réservation avec les données complétées
+        # Create the booking with the completed data
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            # Envoyer un email de notification
+            # Send notification email
             send_booking_status_email(serializer.instance, serializer.instance.status, booking_type='petsitter_company')
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -893,13 +932,13 @@ class PetSitterCompanyBookingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def update_status(self, request, pk=None):
         """
-        Permet aux compagnies et aux pet sitters de mettre à jour le statut d'une réservation.
-        Les réservations annulées sont conservées avec le statut 'cancelled'.
+        Allows companies and pet sitters to update a booking's status.
+        Cancelled bookings are kept with the status 'cancelled'.
         """
         booking = self.get_object()
         user = request.user
         
-        # Vérifier que l'utilisateur est soit le pet sitter, soit la compagnie concernée
+        # Verify that the user is either the pet sitter or the company concerned
         is_authorized = (
             (user.role == 'petsitter' and booking.petsitter.id == user.id) or
             (user.role == 'company' and booking.company.id == user.id)
@@ -907,47 +946,50 @@ class PetSitterCompanyBookingViewSet(viewsets.ModelViewSet):
         
         if not is_authorized and not (user.is_staff or user.is_superuser):
             return Response(
-                {'error': 'Vous n\'êtes pas autorisé à modifier cette réservation'}, 
+                {'error': 'You are not authorized to modify this booking'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer le nouveau statut de la requête
+        # Get the new status from the request
         new_status = request.data.get('status')
         
-        # Vérifier que le statut est valide
+        # Check that the status is valid
         valid_statuses = [status_tuple[0] for status_tuple in PetSitterCompanyBooking.STATUS_CHOICES]
         if new_status not in valid_statuses:
             return Response(
-                {'error': f'Statut invalide. Les statuts valides sont: {", ".join(valid_statuses)}'}, 
+                {'error': f'Invalid status. Valid statuses are: {", ".join(valid_statuses)}'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Mettre à jour le statut de la réservation (conserver même si annulée)
+        # Update the booking status (keep even if cancelled)
         old_status = booking.status
         booking.status = new_status
         booking.save()
         
-        # Envoyer email de notification
+        # Send notification email
         send_booking_status_email(booking, new_status, booking_type='petsitter_company')
         
-        # Créer un message de retour adapté
+        # Create an adapted return message
         status_labels = {
-            'pending': 'en attente',
-            'accepted': 'acceptée',
-            'refused': 'refusée', 
-            'cancelled': 'annulée',
-            'finished': 'terminée'
+            'pending': 'pending',
+            'accepted': 'accepted',
+            'refused': 'declined', 
+            'cancelled': 'cancelled',
+            'finished': 'completed'
         }
         status_label = status_labels.get(new_status, new_status)
         
-        # Renvoyer les données mises à jour
+        # Return the updated data
         serializer = self.get_serializer(booking)
         return Response({
-            'message': f'La réservation a été {status_label} avec succès',
+            'message': f'Booking successfully {status_label}',
             'booking': serializer.data
         })
 
 class PaymentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet to manage payments related to bookings.
+    """
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
@@ -955,120 +997,123 @@ class PaymentViewSet(viewsets.ModelViewSet):
     filterset_fields = ['payment_status', 'payment_type']
 
     def get_queryset(self):
+        """
+        Filters payments based on the user's role.
+        """
         user = self.request.user
         
-        # Les administrateurs peuvent tout voir
+        # Administrators can see all payments
         if user.is_staff or user.is_superuser:
             return Payment.objects.all()
         
-        # Les propriétaires d'animaux voient leurs paiements
+        # Pet owners can see their own payments
         if user.role == 'petowner':
             return Payment.objects.filter(
-                # Paiements liés aux réservations de leurs animaux
+                # Payments linked to bookings for their animals
                 booking__animal__owner=user
             ) | Payment.objects.filter(
-                # Paiements liés aux réservations d'entreprise pour leurs animaux
+                # Payments linked to company bookings for their animals
                 company_booking__animal__owner=user
             )
         
-        # Les pet sitters voient les paiements qui les concernent
+        # Pet sitters can see payments that concern them
         elif user.role == 'petsitter':
             return Payment.objects.filter(booking__sitter=user)
         
-        # Les entreprises voient les paiements qui les concernent
+        # Companies can see payments that concern them
         elif user.role == 'company':
             return Payment.objects.filter(company_booking__company=user)
         
-        # Par défaut, retourner une queryset vide
+        # By default, return an empty queryset
         return Payment.objects.none()
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def process_payment(self, request):
         """
-        Traite un nouveau paiement pour une réservation
+        Process a new payment for a booking.
         """
         user = request.user
         data = request.data.copy()
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner' and not (user.is_staff or user.is_superuser):
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent effectuer des paiements'}, 
+                {'error': 'Only pet owners can make payments'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer les détails de la réservation
+        # Get booking details
         booking_id = data.get('booking')
         company_booking_id = data.get('company_booking')
         
         if not booking_id and not company_booking_id:
             return Response(
-                {'error': 'Veuillez spécifier une réservation à payer'}, 
+                {'error': 'Please specify a booking to pay for'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         try:
-            # Obtenir le montant à payer et vérifier la propriété de la réservation
+            # Get amount to pay and verify booking ownership
             if booking_id:
                 booking = Booking.objects.get(id=booking_id)
                 
-                # Vérifier que l'animal appartient au pet owner
+                # Verify that the animal belongs to the pet owner
                 if booking.animal.owner.id != user.id and not (user.is_staff or user.is_superuser):
                     return Response(
-                        {'error': 'Vous ne pouvez payer que pour vos propres réservations'}, 
+                        {'error': 'You can only pay for your own bookings'}, 
                         status=status.HTTP_403_FORBIDDEN
                     )
                 
-                # Calculer le montant total
+                # Calculate total amount
                 amount = booking.total_price
                 
-                # Vérifier si la réservation est déjà payée
+                # Check if booking is already paid
                 if booking.status == 'paid':
                     return Response(
-                        {'error': 'Cette réservation a déjà été payée'}, 
+                        {'error': 'This booking has already been paid'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Mettre à jour le statut de la réservation une fois le paiement effectué
+                # Update booking status once payment is made
                 booking.status = 'paid'
                 booking.save()
                 
             elif company_booking_id:
                 company_booking = CompanyBooking.objects.get(id=company_booking_id)
                 
-                # Vérifier que l'animal appartient au pet owner
+                # Verify that the animal belongs to the pet owner
                 if company_booking.animal.owner.id != user.id and not (user.is_staff or user.is_superuser):
                     return Response(
-                        {'error': 'Vous ne pouvez payer que pour vos propres réservations'}, 
-                        status=status.HTTP_400_BAD_REQUEST
+                        {'error': 'You can only pay for your own bookings'}, 
+                        status=status.HTTP_403_FORBIDDEN
                     )
                 
-                # Calculer le montant total
+                # Calculate total amount
                 amount = company_booking.total_price
                 
-                # Vérifier si la réservation est déjà payée
+                # Check if booking is already paid
                 if company_booking.status == 'paid':
                     return Response(
-                        {'error': 'Cette réservation a déjà été payée'}, 
+                        {'error': 'This booking has already been paid'}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Mettre à jour le statut de la réservation une fois le paiement effectué
+                # Update booking status once payment is made
                 company_booking.status = 'paid'
                 company_booking.save()
                 
         except (Booking.DoesNotExist, CompanyBooking.DoesNotExist):
             return Response(
-                {'error': 'Réservation introuvable'}, 
+                {'error': 'Booking not found'}, 
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Créer le paiement
+        # Create payment
         payment_data = {
             'booking': booking_id,
             'company_booking': company_booking_id,
             'amount': amount,
-            'payment_status': 'completed',  # On suppose que le paiement est réussi immédiatement pour cet exemple
+            'payment_status': 'completed',  # Assuming payment is immediately successful for this example
             'payment_type': data.get('payment_type', 'card'),
             'transaction_id': f"TR-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
         }
@@ -1077,13 +1122,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             payment = serializer.save()
             
-            # Envoyer un email de confirmation de paiement
+            # Send payment confirmation email
             if booking_id:
-                subject = f"Confirmation de paiement - Réservation #{booking_id}"
-                message = f"Bonjour {user.name},\n\nVotre paiement de {amount}€ pour la réservation de {booking.animal.name} avec {booking.sitter.name} a été accepté.\n\nIdentifiant de transaction: {payment.transaction_id}\n\nMerci d'utiliser Pet at Work!"
+                subject = f"Payment Confirmation - Booking #{booking_id}"
+                message = f"Hello {user.name},\n\nYour payment of {amount}€ for the booking of {booking.animal.name} with {booking.sitter.name} has been accepted.\n\nTransaction ID: {payment.transaction_id}\n\nThank you for using Pet at Work!"
             else:
-                subject = f"Confirmation de paiement - Réservation d'entreprise #{company_booking_id}"
-                message = f"Bonjour {user.name},\n\nVotre paiement de {amount}€ pour la réservation de {company_booking.animal.name} auprès de {company_booking.company.name} a été accepté.\n\nIdentifiant de transaction: {payment.transaction_id}\n\nMerci d'utiliser Pet at Work!"
+                subject = f"Payment Confirmation - Company Booking #{company_booking_id}"
+                message = f"Hello {user.name},\n\nYour payment of {amount}€ for the booking of {company_booking.animal.name} with {company_booking.company.name} has been accepted.\n\nTransaction ID: {payment.transaction_id}\n\nThank you for using Pet at Work!"
 
             try:
                 send_mail(
@@ -1094,10 +1139,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
                     fail_silently=True,
                 )
             except Exception as e:
-                print(f"Erreur lors de l'envoi de l'email de confirmation: {str(e)}")
+                print(f"Error sending confirmation email: {str(e)}")
             
             return Response({
-                'message': 'Paiement effectué avec succès',
+                'message': 'Payment processed successfully',
                 'payment': serializer.data
             }, status=status.HTTP_201_CREATED)
         
@@ -1106,18 +1151,18 @@ class PaymentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_payments(self, request):
         """
-        Renvoie la liste des paiements effectués par l'utilisateur
+        Returns the list of payments made by the user.
         """
         user = request.user
         
-        # Vérifier que l'utilisateur est un pet owner
+        # Check that the user is a pet owner
         if user.role != 'petowner':
             return Response(
-                {'error': 'Seuls les propriétaires d\'animaux peuvent accéder à cette ressource'}, 
+                {'error': 'Only pet owners can access this resource'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Récupérer tous les paiements de l'utilisateur
+        # Get all payments for the user
         payments = Payment.objects.filter(
             booking__animal__owner=user
         ) | Payment.objects.filter(
@@ -1130,30 +1175,30 @@ class PaymentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def refund(self, request, pk=None):
         """
-        Permet aux administrateurs de rembourser un paiement
+        Allows administrators to refund a payment.
         """
         user = request.user
         payment = self.get_object()
         
-        # Vérifier que l'utilisateur est un administrateur
+        # Check that the user is an administrator
         if not (user.is_staff or user.is_superuser):
             return Response(
-                {'error': 'Seuls les administrateurs peuvent effectuer des remboursements'}, 
+                {'error': 'Only administrators can process refunds'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Vérifier que le paiement peut être remboursé
+        # Check that the payment can be refunded
         if payment.payment_status != 'completed':
             return Response(
-                {'error': 'Seuls les paiements complétés peuvent être remboursés'}, 
+                {'error': 'Only completed payments can be refunded'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Mettre à jour le statut du paiement
+        # Update the payment status
         payment.payment_status = 'refunded'
         payment.save()
         
-        # Mettre à jour la réservation associée
+        # Update the associated booking
         if payment.booking:
             booking = payment.booking
             booking.status = 'cancelled'
@@ -1163,13 +1208,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
             company_booking.status = 'cancelled'
             company_booking.save()
         
-        # Envoyer un email de confirmation de remboursement
+        # Send refund confirmation email
         try:
             owner_email = payment.booking.animal.owner.email if payment.booking else payment.company_booking.animal.owner.email
             owner_name = payment.booking.animal.owner.name if payment.booking else payment.company_booking.animal.owner.name
             
-            subject = "Confirmation de remboursement"
-            message = f"Bonjour {owner_name},\n\nVotre paiement de {payment.amount}€ a été remboursé.\n\nIdentifiant de transaction: {payment.transaction_id}\n\nMerci d'utiliser Pet at Work!"
+            subject = "Refund Confirmation"
+            message = f"Hello {owner_name},\n\nYour payment of {payment.amount}€ has been refunded.\n\nTransaction ID: {payment.transaction_id}\n\nThank you for using Pet at Work!"
 
             send_mail(
                 subject,
@@ -1179,11 +1224,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 fail_silently=True,
             )
         except Exception as e:
-            print(f"Erreur lors de l'envoi de l'email de remboursement: {str(e)}")
+            print(f"Error sending refund email: {str(e)}")
         
         serializer = self.get_serializer(payment)
         return Response({
-            'message': 'Remboursement effectué avec succès',
+            'message': 'Refund processed successfully',
             'payment': serializer.data
         })
 
@@ -1199,44 +1244,44 @@ def login(request):
     email = request.data.get('email')
     password = request.data.get('password')
     
-    # Logs détaillés pour le débogage
-    logger.info(f"Tentative de connexion pour l'email: {email}")
-    print(f"Tentative de connexion pour l'email: {email}")
+    # Detailed logs for debugging
+    logger.info(f"Login attempt for email: {email}")
+    print(f"Login attempt for email: {email}")
 
     if not email or not password:
-        logger.warning("Échec de connexion: Email ou mot de passe manquant")
-        print("Échec de connexion: Email ou mot de passe manquant")
-        return Response({'error': 'Email et mot de passe requis'}, status=status.HTTP_400_BAD_REQUEST)
+        logger.warning("Login failed: Email or password missing")
+        print("Login failed: Email or password missing")
+        return Response({'error': 'Email and password required'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Convertir email en minuscules pour éviter les problèmes de casse
+    # Convert email to lowercase to avoid case sensitivity issues
     email_lower = email.lower()
     
-    # Vérifier si l'utilisateur existe
+    # Check if user exists
     try:
-        # affiche la liste des utilisateurs pour le débogage
+        # display user list for debugging
         all_users = User.objects.all()
-        logger.debug(f"Liste des utilisateurs: {[user.email for user in all_users]}")
-        print(f"Liste des utilisateurs: {[user.email for user in all_users]}")
+        logger.debug(f"User list: {[user.email for user in all_users]}")
+        print(f"User list: {[user.email for user in all_users]}")
 
-        # Vérifier si l'utilisateur existe dans la base de données
+        # Check if user exists in database
         user_exists = User.objects.filter(email=email_lower).exists()
         if not user_exists:
-            logger.warning(f"Échec de connexion: Aucun utilisateur trouvé avec l'email {email_lower}")
-            print(f"Échec de connexion: Aucun utilisateur trouvé avec l'email {email_lower}")
-            return Response({'error': 'Identifiants incorrects. Veuillez vérifier votre email et mot de passe.'}, 
+            logger.warning(f"Login failed: No user found with email {email_lower}")
+            print(f"Login failed: No user found with email {email_lower}")
+            return Response({'error': 'Invalid credentials. Please check your email and password.'}, 
                           status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
-        logger.error(f"Erreur lors de la vérification de l'utilisateur: {str(e)}")
-        print(f"Erreur lors de la vérification de l'utilisateur: {str(e)}")
+        logger.error(f"Error while checking user: {str(e)}")
+        print(f"Error while checking user: {str(e)}")
 
-    # Tentative d'authentification
+    # Authentication attempt
     user = authenticate(request, email=email_lower, password=password)
     
     if user is not None:
-        logger.info(f"Connexion réussie pour l'utilisateur: {user.email}")
-        print(f"Connexion réussie pour l'utilisateur: {user.email}")
+        logger.info(f"Login successful for user: {user.email}")
+        print(f"Login successful for user: {user.email}")
         
-        # Vérifier explicitement le statut admin
+        # Explicitly check admin status
         is_admin = user.is_staff or user.is_superuser
         
         refresh = RefreshToken.for_user(user)
@@ -1249,27 +1294,30 @@ def login(request):
             'role': user.role,
             'is_staff': user.is_staff,
             'is_superuser': user.is_superuser,
-            'is_admin': is_admin,  # Ajout d'un champ explicite pour faciliter la vérification côté frontend
-            'admin_status': {      # Informations détaillées sur le statut admin pour le débogage
+            'is_admin': is_admin,  # Add explicit field to facilitate frontend verification
+            'admin_status': {      # Detailed information about admin status for debugging
                 'is_staff': user.is_staff,
                 'is_superuser': user.is_superuser,
                 'permissions': list(user.get_all_permissions())
             }
         })
     else:
-        logger.warning(f"Échec d'authentification pour l'email: {email_lower}")
-        print(f"Échec d'authentification pour l'email: {email_lower}")
+        logger.warning(f"Authentication failed for email: {email_lower}")
+        print(f"Authentication failed for email: {email_lower}")
         
-        # Message plus détaillé pour aider au débogage
-        return Response({'error': 'Identifiants incorrects. Veuillez vérifier votre email et mot de passe.'}, 
+        # More detailed message to help with debugging
+        return Response({'error': 'Invalid credentials. Please check your email and password.'}, 
                        status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
+    """
+    Register a new user with email, password and role.
+    """
     data = request.data.copy()
     data['email'] = data.get('email', '').lower()
-    # Ne pas hasher le mot de passe ici, le serializer s'en occupera
+    # Don't hash the password here, the serializer will take care of it
     
     serializer = UserSerializer(data=data)
     if serializer.is_valid():
@@ -1280,6 +1328,9 @@ def register(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
+    """
+    Update the profile of the authenticated user.
+    """
     user = request.user
     data = request.data
 
@@ -1297,7 +1348,7 @@ def update_profile(request):
 @permission_classes([AllowAny])
 def test_auth(request):
     """
-    Vue de diagnostic pour tester l'authentification.
+    Diagnostic view to test authentication.
     Accessible via /api/test-auth/?email=user@example.com&password=yourpassword
     """
     from django.contrib.auth import authenticate
@@ -1305,52 +1356,52 @@ def test_auth(request):
     email = request.query_params.get('email')
     password = request.query_params.get('password')
     
-    print(f"Test d'authentification pour l'email: {email}")
+    print(f"Authentication test for email: {email}")
     
     if not email or not password:
-        return Response({'error': 'Email et mot de passe requis'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Email and password required'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # Vérifier si l'utilisateur existe
+    # Check if user exists
     try:
         user_exists = User.objects.filter(email=email.lower()).exists()
         if not user_exists:
-            print(f"Test auth: Aucun utilisateur trouvé avec l'email {email.lower()}")
+            print(f"Test auth: No user found with email {email.lower()}")
             return Response({
-                'error': 'Utilisateur non trouvé',
+                'error': 'User not found',
                 'email_tested': email.lower(),
                 'user_exists': False
             }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        print(f"Test auth: Erreur lors de la vérification de l'utilisateur: {str(e)}")
+        print(f"Test auth: Error while checking user: {str(e)}")
     
-    # Tentative d'authentification
+    # Authentication attempt
     user = authenticate(request, email=email.lower(), password=password)
     
     if user is not None:
-        print(f"Test auth: Authentification réussie pour {email.lower()}")
+        print(f"Test auth: Authentication successful for {email.lower()}")
         return Response({
             'success': True,
-            'message': 'Authentification réussie',
+            'message': 'Authentication successful',
             'user_id': user.id,
             'email': user.email,
             'name': user.name,
             'role': user.role
         })
     else:
-        # Tenter de récupérer l'utilisateur pour comparer manuellement les mots de passe
+        # Try to retrieve the user to manually compare passwords
         try:
             user = User.objects.get(email=email.lower())
-            print(f"Test auth: Utilisateur trouvé, mais échec d'authentification pour {email.lower()}")
+            print(f"Test auth: User found, but authentication failed for {email.lower()}")
             return Response({
-                'error': 'Mot de passe incorrect',
+                'error': 'Incorrect password',
                 'user_exists': True,
                 'email_tested': email.lower(),
-                'auth_result': 'Échec de l\'authentification avec le mot de passe fourni'
+                'auth_result': 'Authentication failed with the provided password'
             }, status=status.HTTP_401_UNAUTHORIZED)
         except User.DoesNotExist:
-            print(f"Test auth: Utilisateur non trouvé (double vérification) pour {email.lower()}")
+            print(f"Test auth: User not found (double check) for {email.lower()}")
             return Response({
-                'error': 'Utilisateur introuvable',
+                'error': 'User not found',
                 'user_exists': False,
                 'email_tested': email.lower()
             }, status=status.HTTP_404_NOT_FOUND)
@@ -1359,21 +1410,21 @@ def test_auth(request):
 @permission_classes([AllowAny])
 def list_users_test(request):
     """
-    Vue de test pour lister tous les utilisateurs.
-    Cette API est en mode AllowAny pour faciliter les tests.
-    En production, vous devriez restreindre l'accès.
+    Test view to list all users.
+    This API is in AllowAny mode for testing purposes.
+    In production, you should restrict access.
     """
     try:
         users = User.objects.all()
         # Limit to 20 users for performance
         users = users[:20]
         
-        # Créer une liste simplifiée des données utilisateur
+        # Create a simplified list of user data
         user_data = []
         for user in users:
-            # Récupérer le mot de passe haché pour le débogage
-            # ATTENTION: Ceci est uniquement pour le débogage et ne devrait jamais
-            # être fait en production!
+            # Get the hashed password for debugging
+            # WARNING: This is only for debugging and should never
+            # be done in production!
             user_data.append({
                 'id': user.id,
                 'email': user.email,
@@ -1381,17 +1432,17 @@ def list_users_test(request):
                 'role': user.role,
                 'is_staff': user.is_staff,
                 'is_superuser': user.is_superuser,
-                'password_hash': user.password  # Le mot de passe haché pour le débogage
+                'password_hash': user.password  # The hashed password for debugging
             })
         
-        print(f"Liste de {len(user_data)} utilisateurs récupérée avec succès")
+        print(f"List of {len(user_data)} users retrieved successfully")
         return Response({
             'success': True,
             'count': len(user_data),
             'users': user_data
         })
     except Exception as e:
-        print(f"Erreur lors de la récupération des utilisateurs: {str(e)}")
+        print(f"Error retrieving users: {str(e)}")
         return Response({
             'success': False,
             'error': str(e)
@@ -1401,96 +1452,96 @@ def list_users_test(request):
 @permission_classes([AllowAny])
 def debug_login(request):
     """
-    Vue de diagnostic avancé qui teste l'authentification et renvoie des informations détaillées
-    sur chaque étape du processus d'authentification.
+    Advanced diagnostic view that tests authentication and returns detailed information
+    about each step of the authentication process.
     """
     from rest_framework_simplejwt.tokens import RefreshToken
     from django.contrib.auth import authenticate
     import sys
     
-    # Récupérer les identifiants
+    # Get credentials
     email = request.data.get('email')
     password = request.data.get('password')
     
     response_data = {
         'debug_info': {
-            'email_reçu': email,
-            'password_reçu': '***' if password else None,
-            'longueur_password': len(password) if password else 0,
-            'étapes': []
+            'email_received': email,
+            'password_received': '***' if password else None,
+            'password_length': len(password) if password else 0,
+            'steps': []
         }
     }
     
-    # Étape 1: Vérifier que l'email et le mot de passe sont fournis
+    # Step 1: Check that email and password are provided
     if not email or not password:
-        response_data['debug_info']['étapes'].append({
-            'étape': 'validation_entrée',
-            'statut': 'échec',
-            'raison': 'Email ou mot de passe manquant'
+        response_data['debug_info']['steps'].append({
+            'step': 'input_validation',
+            'status': 'failed',
+            'reason': 'Email or password missing'
         })
-        response_data['error'] = 'Email et mot de passe requis'
+        response_data['error'] = 'Email and password required'
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
-    response_data['debug_info']['étapes'].append({
-        'étape': 'validation_entrée',
-        'statut': 'succès'
+    response_data['debug_info']['steps'].append({
+        'step': 'input_validation',
+        'status': 'success'
     })
     
-    # Standardiser email en minuscules
+    # Standardize email to lowercase
     email_lower = email.lower()
-    response_data['debug_info']['email_normalisé'] = email_lower
+    response_data['debug_info']['normalized_email'] = email_lower
     
-    # Étape 2: Vérifier si l'utilisateur existe
+    # Step 2: Check if the user exists
     try:
         user_exists = User.objects.filter(email=email_lower).exists()
         
         if user_exists:
             user = User.objects.get(email=email_lower)
-            response_data['debug_info']['utilisateur_trouvé'] = True
+            response_data['debug_info']['user_found'] = True
             response_data['debug_info']['user_id'] = user.id
             response_data['debug_info']['is_active'] = user.is_active
-            response_data['debug_info']['password_hash_début'] = user.password[:20] + '...' if user.password else None
+            response_data['debug_info']['password_hash_start'] = user.password[:20] + '...' if user.password else None
         else:
-            response_data['debug_info']['utilisateur_trouvé'] = False
-            response_data['debug_info']['étapes'].append({
-                'étape': 'vérification_utilisateur',
-                'statut': 'échec',
-                'raison': f'Aucun utilisateur trouvé avec l\'email {email_lower}'
+            response_data['debug_info']['user_found'] = False
+            response_data['debug_info']['steps'].append({
+                'step': 'user_verification',
+                'status': 'failed',
+                'reason': f'No user found with email {email_lower}'
             })
-            response_data['error'] = 'Identifiants incorrects'
+            response_data['error'] = 'Invalid credentials'
             return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
         
-        response_data['debug_info']['étapes'].append({
-            'étape': 'vérification_utilisateur',
-            'statut': 'succès'
+        response_data['debug_info']['steps'].append({
+            'step': 'user_verification',
+            'status': 'success'
         })
     except Exception as e:
-        response_data['debug_info']['étapes'].append({
-            'étape': 'vérification_utilisateur',
-            'statut': 'erreur',
+        response_data['debug_info']['steps'].append({
+            'step': 'user_verification',
+            'status': 'error',
             'exception': str(e),
             'traceback': str(sys.exc_info())
         })
-        response_data['error'] = f'Erreur lors de la vérification de l\'utilisateur: {str(e)}'
+        response_data['error'] = f'Error checking user: {str(e)}'
         return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    # Étape 3: Tentative d'authentification
+    # Step 3: Authentication attempt
     try:
         auth_user = authenticate(request, email=email_lower, password=password)
         
         if auth_user is not None:
-            response_data['debug_info']['authentification'] = 'réussie'
+            response_data['debug_info']['authentication'] = 'successful'
             response_data['debug_info']['auth_user_id'] = auth_user.id
             
-            # Créer tokens JWT
+            # Create JWT tokens
             refresh = RefreshToken.for_user(auth_user)
             
-            response_data['debug_info']['étapes'].append({
-                'étape': 'authentification',
-                'statut': 'succès'
+            response_data['debug_info']['steps'].append({
+                'step': 'authentication',
+                'status': 'success'
             })
             
-            # Informations de connexion réussie
+            # Successful login information
             response_data['success'] = True
             response_data['access'] = str(refresh.access_token)
             response_data['refresh'] = str(refresh)
@@ -1501,30 +1552,30 @@ def debug_login(request):
             
             return Response(response_data)
         else:
-            # Authentification échouée
-            response_data['debug_info']['authentification'] = 'échouée'
+            # Authentication failed
+            response_data['debug_info']['authentication'] = 'failed'
             
-            # Vérification manuelle de mot de passe
+            # Manual password verification
             if hasattr(user, 'check_password'):
                 pw_check = user.check_password(password)
                 response_data['debug_info']['check_password'] = pw_check
             else:
-                response_data['debug_info']['check_password'] = 'méthode non disponible'
+                response_data['debug_info']['check_password'] = 'method not available'
             
-            response_data['debug_info']['étapes'].append({
-                'étape': 'authentification',
-                'statut': 'échec',
-                'raison': 'Mot de passe incorrect ou problème avec authenticate()'
+            response_data['debug_info']['steps'].append({
+                'step': 'authentication',
+                'status': 'failed',
+                'reason': 'Incorrect password or issue with authenticate()'
             })
             
-            response_data['error'] = 'Identifiants incorrects'
+            response_data['error'] = 'Invalid credentials'
             return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
-        response_data['debug_info']['étapes'].append({
-            'étape': 'authentification',
-            'statut': 'erreur',
+        response_data['debug_info']['steps'].append({
+            'step': 'authentication',
+            'status': 'error',
             'exception': str(e),
             'traceback': str(sys.exc_info())
         })
-        response_data['error'] = f'Erreur lors de l\'authentification: {str(e)}'
+        response_data['error'] = f'Authentication error: {str(e)}'
         return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

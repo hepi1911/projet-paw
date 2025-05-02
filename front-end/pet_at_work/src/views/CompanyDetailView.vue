@@ -166,136 +166,146 @@ const submitReservation = async () => {
 
 <style scoped>
 .view-container {
-  background-color: #f5f5f5;
   min-height: calc(100vh - var(--header-height));
-  display: flex;
-  justify-content: center;
-  align-items: start;
-  padding-top: 2rem;
+  padding: var(--space-xl);
 }
 
 .company-detail {
   width: 100%;
-  max-width: 800px;
+  max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 0 2rem;
 }
 
-.detail-card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
+.detail-container {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-xl);
 }
 
 .info-section {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .reservation-section {
-  margin-top: 2rem;
+  margin-top: var(--space-xl);
 }
 
 .reservation-section h2 {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-lg);
   font-size: 1.5rem;
-  color: #333;
+  color: var(--color-heading);
 }
 
 .reservation-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-md);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-xs);
 }
 
 label {
   font-weight: 600;
-  color: #555;
+  color: var(--color-text);
 }
 
 input, select, textarea {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
 }
 
 .btn-reserve {
-  background-color: #4CAF50;
+  background-color: var(--color-success);
   color: white;
   border: none;
-  padding: 1rem;
-  border-radius: 4px;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 1rem;
+  transition: background-color var(--transition-speed);
+  margin-top: var(--space-md);
 }
 
-.btn-reserve:hover {
-  background-color: #388E3C;
+.btn-reserve:hover:not(:disabled) {
+  background-color: var(--color-success-dark);
 }
 
 .btn-reserve:disabled {
-  background-color: #9E9E9E;
+  background-color: var(--color-text-light);
   cursor: not-allowed;
 }
 
 .message {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 4px;
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
   text-align: center;
 }
 
 .success {
-  background-color: #E8F5E9;
-  color: #388E3C;
-  border: 1px solid #C8E6C9;
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+  border: 1px solid var(--color-success);
 }
 
 .error {
-  background-color: #FFEBEE;
-  color: #D32F2F;
-  border: 1px solid #FFCDD2;
+  background-color: var(--color-danger-light);
+  color: var(--color-danger-dark);
+  border: 1px solid var(--color-danger);
 }
 
 .no-animals {
   text-align: center;
-  padding: 1.5rem;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+  padding: var(--space-lg);
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-sm);
 }
 
 .btn-add-animal {
   display: inline-block;
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #2196F3;
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  background-color: var(--color-primary);
   color: white;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   font-weight: 600;
-  transition: background-color 0.3s;
+  transition: background-color var(--transition-speed);
 }
 
 .btn-add-animal:hover {
-  background-color: #1976D2;
+  background-color: var(--color-primary-hover);
 }
 
 .loading {
   text-align: center;
-  padding: 2rem;
+  padding: var(--space-xl);
   font-size: 1.2rem;
-  color: #757575;
+  color: var(--color-text-light);
+}
+
+@media (max-width: 768px) {
+  .view-container {
+    padding: var(--space-md);
+  }
+
+  .detail-container {
+    padding: var(--space-lg);
+  }
 }
 </style>

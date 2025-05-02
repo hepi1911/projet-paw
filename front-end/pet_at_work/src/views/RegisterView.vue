@@ -235,87 +235,165 @@ const handleContinue = () => {
 </script>
 
 <style scoped>
-.view-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - var(--header-height));
-  background-color: #f5f5f5;
-  padding: 2rem 1rem;
-}
-
 .register-container {
   width: 100%;
   max-width: 500px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: var(--space-lg) auto;
+  padding: var(--space-xl);
+  background: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-lg);
+}
+
+h2 {
+  color: var(--color-heading);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.role-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.role-btn {
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  background: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  font-weight: 500;
+}
+
+.role-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.role-btn:hover:not(.active) {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.register-steps {
+  margin-top: var(--space-xl);
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-xl);
+}
+
+.step {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--color-background-mute);
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 var(--space-sm);
+}
+
+.step.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.step.completed {
+  background-color: var(--color-success);
+  color: white;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-xs);
 }
 
-label {
-  color: #2c3e50;
+.form-group label {
+  color: var(--color-text);
   font-weight: 500;
 }
 
-input, select, textarea {
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.form-group input,
+.form-group textarea {
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
 }
 
-textarea {
-  min-height: 100px;
-  resize: vertical;
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
 }
 
-.submit-button {
-  background-color: #42b983;
-  color: white;
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.prev-btn,
+.next-btn,
+.submit-btn {
+  padding: var(--space-sm) var(--space-lg);
   border: none;
-  padding: 1rem;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed);
+  flex: 1;
 }
 
-.submit-button:hover {
-  background-color: #3aa876;
+.prev-btn {
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
 }
 
-.submit-button:disabled {
-  background-color: #ddd;
-  cursor: not-allowed;
+.prev-btn:hover {
+  background-color: var(--color-border);
+}
+
+.next-btn,
+.submit-btn {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.next-btn:hover,
+.submit-btn:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .error-message {
-  color: #dc3545;
+  color: var(--color-danger);
   text-align: center;
   font-size: 0.9rem;
+  margin-top: var(--space-sm);
 }
 
 .login-link {
   text-align: center;
-  margin-top: 1rem;
-  color: #666;
+  margin-top: var(--space-lg);
 }
 
 .login-link a {
-  color: #42b983;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -323,53 +401,22 @@ textarea {
   text-decoration: underline;
 }
 
-.password-requirements {
-  list-style: none;
-  padding: 0;
-  margin: 0.5rem 0;
-  font-size: 0.8rem;
-  color: #666;
-}
+@media (max-width: 768px) {
+  .register-container {
+    padding: var(--space-lg);
+    margin: var(--space-md);
+  }
 
-.password-requirements li {
-  margin: 0.2rem 0;
-  position: relative;
-  padding-left: 1.5rem;
-}
+  .role-buttons {
+    flex-direction: column;
+  }
 
-.password-requirements li:before {
-  content: '✗';
-  position: absolute;
-  left: 0;
-  color: #dc3545;
-}
+  .role-btn {
+    width: 100%;
+  }
 
-.password-requirements li.met:before {
-  content: '✓';
-  color: #28a745;
-}
-
-.password-match {
-  font-size: 0.8rem;
-  margin: 0.2rem 0;
-  color: #28a745;
-}
-
-.password-match.error {
-  color: #dc3545;
-}
-
-.confirmation-step {
-  text-align: center;
-}
-
-.confirmation-step h2 {
-  color: #28a745;
-  margin-bottom: 1rem;
-}
-
-.confirmation-step p {
-  color: #666;
-  margin-bottom: 2rem;
+  .button-group {
+    flex-direction: column;
+  }
 }
 </style>

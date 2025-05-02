@@ -28,7 +28,7 @@
               </span>
             </p>
             <div class="capacity-bar-container">
-              <div class="capacity-bar" :style="{ width: capacityPercentage + '%', backgroundColor: capacityBarColor }"></div>
+              <div class="capacity-bar" :class="capacityBarClass" :style="{ width: capacityPercentage + '%' }"></div>
             </div>
           </div>
           <div class="company-actions">
@@ -212,12 +212,12 @@ const capacityPercentage = computed(() => {
   return Math.min(100, (currentCapacityUsed.value / currentCompany.value.capacity) * 100);
 });
 
-// Couleur de la barre de capacité en fonction du remplissage
-const capacityBarColor = computed(() => {
+// Classe de la barre de capacité en fonction du remplissage
+const capacityBarClass = computed(() => {
   const percentage = capacityPercentage.value;
-  if (percentage < 50) return '#2ecc71'; // Vert
-  if (percentage < 75) return '#f39c12'; // Orange
-  return '#e74c3c'; // Rouge
+  if (percentage < 50) return 'low';
+  if (percentage < 75) return 'medium';
+  return 'high';
 });
 
 // Chargement des données
@@ -424,206 +424,230 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.view-container {
-  background-color: #f5f5f5;
-  min-height: calc(100vh - var(--header-height));
-}
-
 .company-dashboard {
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--space-xl);
 }
 
-h1, h2 {
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 1.5rem;
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
 }
 
-/* Navigation */
-.profile-nav {
-  text-align: right;
-  margin-bottom: 2rem;
+/* Section Profil */
+.profile-section {
+  margin-bottom: var(--space-xl);
 }
 
-.profile-btn {
-  padding: 0.5rem 1rem;
-  background-color: #3498db;
+.profile-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border-left: 5px solid var(--color-primary);
+}
+
+.profile-info {
+  margin-bottom: var(--space-lg);
+}
+
+.profile-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.edit-profile-btn {
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
 }
 
-.profile-btn:hover {
-  background-color: #2980b9;
+.edit-profile-btn:hover {
+  background-color: var(--color-primary-hover);
 }
 
 /* Information de la compagnie */
 .company-info-section {
-  margin-bottom: 3rem;
+  margin-bottom: var(--space-xl);
 }
 
 .company-info-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 5px solid #3498db;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border-left: 5px solid var(--color-primary);
 }
 
 .capacity-info {
-  margin: 1rem 0;
+  margin: var(--space-md) 0;
 }
 
 .capacity-used {
   font-style: italic;
-  margin-left: 0.5rem;
+  margin-left: var(--space-sm);
 }
 
 .capacity-bar-container {
   height: 8px;
-  background-color: #ecf0f1;
-  border-radius: 4px;
-  margin: 1rem 0;
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-sm);
+  margin: var(--space-md) 0;
   width: 100%;
   overflow: hidden;
 }
 
 .capacity-bar {
   height: 100%;
-  transition: width 0.5s ease, background-color 0.5s ease;
+  transition: width var(--transition-speed), background-color var(--transition-speed);
+}
+
+.capacity-bar.low {
+  background-color: var(--color-success);
+}
+
+.capacity-bar.medium {
+  background-color: var(--color-warning);
+}
+
+.capacity-bar.high {
+  background-color: var(--color-danger);
 }
 
 /* Section Réservations */
 .bookings-section {
-  margin-bottom: 3rem;
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 1.5rem;
+  margin-bottom: var(--space-xl);
+  background-color: var(--color-background-soft);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
 }
 
 .bookings-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-md);
 }
 
 .booking-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 5px solid #ccc;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border-left: 5px solid var(--color-border);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .booking-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Status-specific styles */
 .booking-card.pending {
-  border-left-color: #f39c12;
-}
-
-.booking-card.accepted {
-  border-left-color: #2ecc71;
-}
-
-.booking-card.refused {
-  border-left-color: #e74c3c;
-}
-
-.booking-card.cancelled {
-  border-left-color: #95a5a6;
-  opacity: 0.8;
-}
-
-.status {
-  font-weight: bold;
+  border-left-color: var(--color-warning);
 }
 
 .booking-card.pending .status {
-  color: #f39c12;
+  color: var(--color-warning);
+}
+
+.booking-card.accepted {
+  border-left-color: var(--color-success);
 }
 
 .booking-card.accepted .status {
-  color: #2ecc71;
+  color: var(--color-success);
+}
+
+.booking-card.refused {
+  border-left-color: var(--color-danger);
 }
 
 .booking-card.refused .status {
-  color: #e74c3c;
+  color: var(--color-danger);
+}
+
+.booking-card.cancelled {
+  border-left-color: var(--color-text-light);
+  opacity: 0.8;
 }
 
 .booking-card.cancelled .status {
-  color: #95a5a6;
+  color: var(--color-text-light);
 }
 
-/* Booking actions */
+/* Actions buttons */
 .booking-actions {
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
 }
 
-/* Buttons */
-.accept-btn {
-  background-color: #2ecc71;
+.accept-btn, .submit-btn {
+  background-color: var(--color-success);
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-sm) var(--space-md);
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed);
 }
 
-.accept-btn:hover {
-  background-color: #27ae60;
+.accept-btn:hover, .submit-btn:hover {
+  background-color: var(--color-success-dark);
 }
 
-.refuse-btn {
-  background-color: #e74c3c;
+.refuse-btn, .delete-btn {
+  background-color: var(--color-danger);
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-sm) var(--space-md);
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed);
 }
 
-.refuse-btn:hover {
-  background-color: #c0392b;
+.refuse-btn:hover, .delete-btn:hover {
+  background-color: var(--color-danger-dark);
 }
 
 button:disabled {
-  background-color: #95a5a6;
+  background-color: var(--color-text-light);
   cursor: not-allowed;
 }
 
 /* Loading and empty message */
 .loading, .empty-message {
   text-align: center;
-  padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  margin: 2rem 0;
-  color: #6c757d;
+  padding: var(--space-xl);
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-md);
+  margin: var(--space-xl) 0;
+  color: var(--color-text-light);
 }
 
 /* Notification bar */
 .notification-bar {
-  background-color: #3498db;
+  background-color: var(--color-primary);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   color: white;
-  padding: 1rem;
+  padding: var(--space-md);
   text-align: center;
+  z-index: var(--z-notification, 1000);
 }
 
 .notification-bar .close-btn {
@@ -633,19 +657,19 @@ button:disabled {
   font-size: 1.5rem;
   cursor: pointer;
   position: absolute;
-  right: 1rem;
-  top: 1rem;
+  right: var(--space-md);
+  top: var(--space-md);
 }
 
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 768px) {
   .company-dashboard {
-    padding: 1rem;
+    padding: var(--space-md);
   }
   
   .booking-actions {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-sm);
   }
   
   .booking-actions button {

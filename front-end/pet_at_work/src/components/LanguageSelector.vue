@@ -70,43 +70,52 @@ onUnmounted(() => {
 }
 
 .language-button {
-  background: white;
-  border: 1px solid #ddd;
-  padding: 6px 12px;
-  border-radius: 4px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
+  transition: border-color var(--transition-speed);
+}
+
+.language-button:hover {
+  border-color: var(--color-border-hover);
 }
 
 .arrow {
-  font-size: 10px;
+  font-size: 0.625rem;
+  color: var(--color-text-light);
 }
 
 .language-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   min-width: 120px;
   z-index: 100;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .language-option {
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-md);
   cursor: pointer;
+  color: var(--color-text);
+  transition: background-color var(--transition-speed);
 }
 
 .language-option:hover {
-  background: #f5f5f5;
+  background: var(--color-background-soft);
 }
 
 .language-option.active {
-  background: #e6f7ff;
-  font-weight: bold;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
 }
 </style>

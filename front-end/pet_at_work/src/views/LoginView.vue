@@ -111,81 +111,93 @@ const getDefaultRedirect = (role) => {
 .login-container {
   width: 100%;
   max-width: 400px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: var(--space-xl);
+  background: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
   margin: 0 auto;
 }
 
 h1 {
   text-align: center;
-  color: #2c3e50;
-  margin-bottom: 2rem;
+  color: var(--color-heading);
+  margin-bottom: var(--space-xl);
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-lg);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 label {
-  color: #2c3e50;
+  color: var(--color-text);
   font-weight: 500;
 }
 
 input {
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
+}
+
+input:focus {
+  border-color: var(--color-primary);
+  outline: none;
 }
 
 .submit-button {
-  background-color: #42b983;
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 1rem;
-  border-radius: 4px;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
 }
 
 .submit-button:disabled {
-  background-color: #a5d6a7;
+  background-color: var(--color-text-light);
   cursor: not-allowed;
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #3aa876;
+  background-color: var(--color-primary-hover);
 }
 
 .error-message {
-  color: #dc3545;
+  color: var(--color-danger);
   text-align: center;
   font-size: 0.9rem;
 }
 
 .register-link {
   text-align: center;
-  margin-top: 1rem;
-  color: #666;
+  margin-top: var(--space-md);
 }
 
 .register-link a {
-  color: #42b983;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 .register-link a:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    margin: var(--space-md);
+    padding: var(--space-lg);
+  }
 }
 </style>

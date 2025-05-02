@@ -504,326 +504,189 @@ async function submitBooking() {
 
 <style scoped>
 .view-container {
-  background-color: #f5f5f5;
   min-height: calc(100vh - var(--header-height));
 }
 
 .petsitter-detail {
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--space-xl);
 }
 
 .loading, .error {
   text-align: center;
-  padding: 40px;
+  padding: var(--space-xl);
   font-size: 18px;
 }
 
 .error {
-  color: #e74c3c;
-}
-
-.back-link {
-  margin-bottom: 20px;
+  color: var(--color-danger);
 }
 
 .back-link a {
-  color: #3498db;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 .sitter-container {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: var(--space-xl);
 }
 
-.sitter-profile {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 25px;
+.sitter-profile, .booking-section, .pricing-info {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
 }
 
 .sitter-header h1 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #2c3e50;
+  color: var(--color-heading);
+  margin-bottom: var(--space-sm);
 }
 
 .sitter-contact {
-  color: #7f8c8d;
-  font-size: 16px;
-  margin-bottom: 20px;
-}
-
-.sitter-body {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  color: var(--color-text-light);
 }
 
 .sitter-info h2 {
-  color: #2c3e50;
+  color: var(--color-heading);
   font-size: 18px;
-  margin-top: 25px;
-  margin-bottom: 10px;
+  margin: var(--space-lg) 0 var(--space-sm);
 }
 
 .ratings .stars {
-  color: #f39c12;
-  font-size: 18px;
-}
-
-.rating-score {
-  color: #7f8c8d;
-  margin-left: 10px;
-}
-
-/* Section tarification */
-.pricing-info {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 25px;
-}
-
-.pricing-info h2 {
-  margin-top: 0;
-  color: #2c3e50;
-  font-size: 20px;
-  margin-bottom: 15px;
-}
-
-.pricing-details {
-  font-size: 18px;
-  color: #2c3e50;
-}
-
-.price {
-  font-weight: bold;
-  color: #27ae60;
-}
-
-.booking-section {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 25px;
-}
-
-.booking-section h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #2c3e50;
+  color: var(--color-warning);
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-md);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: var(--space-xs);
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 16px;
 }
 
 .price-calculation {
-  margin: 20px 0;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  border-left: 4px solid #3498db;
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-sm);
+  border-left: 4px solid var(--color-primary);
 }
 
 .total-price {
-  font-size: 18px;
-  color: #27ae60;
+  color: var(--color-secondary);
   font-weight: 600;
 }
 
 .submit-btn, .payment-btn {
-  background-color: #27ae60;
+  background-color: var(--color-secondary);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 4px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.submit-btn:hover, .payment-btn:hover {
-  background-color: #219653;
-}
-
-.success-message {
-  background-color: #d4edda;
-  color: #155724;
-  padding: 15px;
-  border-radius: 4px;
-  margin-top: 20px;
-}
-
-.error-message {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 15px;
-  border-radius: 4px;
-  margin-top: 20px;
-}
-
-/* Styles pour la section de paiement */
-.payment-section {
-  margin-top: 20px;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
-.payment-section h3 {
-  margin-top: 0;
-  color: #2c3e50;
-  font-size: 18px;
-  margin-bottom: 15px;
-}
-
-.payment-details {
-  margin-top: 20px;
-}
-
-.payment-method {
-  margin: 20px 0;
-}
-
-.payment-method h4 {
-  margin-bottom: 10px;
-  color: #2c3e50;
-}
-
-.payment-options {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.payment-options label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-}
-
-.card-details {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-}
-
-.card-info-row {
-  display: flex;
-  gap: 15px;
-}
-
-.expiry {
-  flex: 1;
-}
-
-.cvv {
-  flex: 1;
-}
-
-.payment-btn {
-  margin-top: 20px;
-  background-color: #27ae60;
+  transition: background-color var(--transition-speed);
   width: 100%;
 }
 
-.payment-success {
-  background-color: #d4edda;
-  color: #155724;
-  padding: 20px;
-  border-radius: 4px;
-  margin-top: 20px;
-  text-align: center;
+.submit-btn:hover:not(:disabled), 
+.payment-btn:hover:not(:disabled) {
+  background-color: var(--color-secondary-hover);
 }
 
-/* Styles pour le message de connexion */
+.success-message {
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--space-md);
+}
+
+.error-message {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger-dark);
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--space-md);
+}
+
 .login-prompt {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 25px;
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
   text-align: center;
-  border-left: 5px solid #3498db;
-  margin-top: 20px;
+  border-left: 5px solid var(--color-primary);
+  margin-top: var(--space-md);
 }
 
 .login-buttons {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.login-btn, .register-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
 }
 
 .login-btn {
-  background-color: #3498db;
+  background-color: var(--color-primary);
   color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
 }
 
 .login-btn:hover {
-  background-color: #2980b9;
+  background-color: var(--color-primary-hover);
 }
 
 .register-btn {
-  background-color: #2ecc71;
+  background-color: var(--color-secondary);
   color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
 }
 
 .register-btn:hover {
-  background-color: #27ae60;
+  background-color: var(--color-secondary-hover);
 }
 
 @media (max-width: 768px) {
-  .sitter-container {
-    flex-direction: column;
-  }
-  
-  .sitter-profile, .booking-section {
-    width: 100%;
+  .petsitter-detail {
+    padding: var(--space-md);
   }
   
   .login-buttons {
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-sm);
   }
   
   .card-info-row {
     flex-direction: column;
-    gap: 20px;
+    gap: var(--space-md);
   }
 }
 </style>

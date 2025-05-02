@@ -204,160 +204,125 @@ async function submitReservation() {
 
 <style scoped>
 .view-container {
-  background-color: #f5f5f5;
   min-height: calc(100vh - var(--header-height));
-}
-
-.company-reservation {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 40px;
-  font-size: 18px;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.back-link {
-  margin-bottom: 20px;
+  padding: var(--space-xl);
 }
 
 .back-link a {
-  color: #42b983;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 .reservation-container {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: var(--space-xl);
 }
 
 .company-profile {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 25px;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
 }
 
 .company-header h1 {
   margin-top: 0;
-  margin-bottom: 10px;
-  color: #2c3e50;
+  margin-bottom: var(--space-sm);
+  color: var(--color-heading);
 }
 
 .company-contact {
-  color: #7f8c8d;
-  font-size: 16px;
-  margin-bottom: 20px;
+  color: var(--color-text-light);
+  margin-bottom: var(--space-lg);
 }
 
 .company-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-md);
 }
 
 .company-info h2 {
-  color: #2c3e50;
+  color: var(--color-heading);
   font-size: 18px;
-  margin-top: 25px;
-  margin-bottom: 10px;
+  margin: var(--space-lg) 0 var(--space-sm);
 }
 
 .reservation-section {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 25px;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
 }
 
 .reservation-section h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #2c3e50;
-}
-
-.reservation-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  margin-bottom: var(--space-lg);
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: var(--space-md);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: var(--space-xs);
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 16px;
 }
 
 .submit-btn {
-  background-color: #42b983;
+  background-color: var(--color-secondary);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 4px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color var(--transition-speed);
   font-weight: 600;
 }
 
-.submit-btn:hover {
-  background-color: #3aa876;
+.submit-btn:hover:not(:disabled) {
+  background-color: var(--color-secondary-hover);
 }
 
 .submit-btn:disabled {
-  background-color: #9E9E9E;
+  background-color: var(--color-text-light);
   cursor: not-allowed;
 }
 
 .success-message {
-  background-color: #E8F5E9;
-  color: #388E3C;
-  padding: 15px;
-  border-radius: 4px;
-  margin-top: 20px;
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--space-md);
   text-align: center;
 }
 
 .error-message {
-  background-color: #FFEBEE;
-  color: #D32F2F;
-  padding: 15px;
-  border-radius: 4px;
-  margin-top: 20px;
+  background-color: var(--color-danger-light);
+  color: var(--color-danger-dark);
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--space-md);
   text-align: center;
 }
 
 @media (max-width: 768px) {
-  .reservation-container {
-    flex-direction: column;
-  }
-  
-  .company-profile, .reservation-section {
-    width: 100%;
+  .view-container {
+    padding: var(--space-md);
   }
 }
 </style>

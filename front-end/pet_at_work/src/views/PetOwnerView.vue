@@ -494,437 +494,218 @@ const userHasRole = (role) => {
 </script>
 
 <style scoped>
-.view-container {
-  background-color: #f5f5f5;
-  min-height: calc(100vh - var(--header-height));
-}
-
 .petowner-dashboard {
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--space-xl);
 }
 
-.petowner-container {
-  width: 100%;
-  max-width: 1200px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
 }
 
-.pet-owner {
-  padding: 2rem;
-  max-width: 1000px;
-  margin: 0 auto;
+.profile-section {
+  margin-bottom: var(--space-xl);
 }
 
-h1, h2 {
-  color: #2c3e50;
-  text-align: center;
+.profile-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border-left: 5px solid var(--color-primary);
 }
 
-/* Navigation */
-.profile-nav {
-  text-align: right;
-  margin-bottom: 1rem;
+.profile-info {
+  margin-bottom: var(--space-lg);
 }
 
-.profile-btn {
-  padding: 0.5rem 1rem;
-  background-color: #3498db;
+.profile-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.edit-profile-btn {
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
 }
 
-.profile-btn:hover {
-  background-color: #2980b9;
+.edit-profile-btn:hover {
+  background-color: var(--color-primary-hover);
 }
 
-/* Section Animaux */
-.animals-section {
-  margin-bottom: 4rem;
+.pets-section {
+  margin-bottom: var(--space-xl);
 }
 
-.animals-list {
+.pets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
 }
 
-.animal-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+.pet-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-.animal-card:hover {
+.pet-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
-.add-animal-card {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-top: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.pet-info {
+  margin-top: var(--space-md);
+  color: var(--color-text);
 }
 
-.add-animal-form {
+.pet-actions {
+  margin-top: var(--space-md);
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: var(--space-sm);
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.form-group input, .form-group textarea {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.form-group textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.add-animal-btn {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #3498db;
+.edit-pet-btn {
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
 }
 
-.add-animal-btn:hover:not(:disabled) {
-  background-color: #2980b9;
+.edit-pet-btn:hover {
+  background-color: var(--color-primary-hover);
 }
 
-.add-animal-btn:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
+.delete-pet-btn {
+  background-color: var(--color-danger);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
 }
 
-.no-animals-message {
+.delete-pet-btn:hover {
+  background-color: var(--color-danger-dark);
+}
+
+.add-pet-btn {
+  background-color: var(--color-success);
+  color: white;
+  border: none;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+  width: 100%;
+}
+
+.add-pet-btn:hover {
+  background-color: var(--color-success-dark);
+}
+
+.loading, .empty-message {
   text-align: center;
-  padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  margin: 2rem 0;
+  padding: var(--space-xl);
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-md);
+  margin: var(--space-xl) 0;
+  color: var(--color-text-light);
 }
 
-/* Section Réservations */
 .bookings-section {
-  margin-bottom: 4rem;
-}
-
-.bookings-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 2rem;
+  margin-bottom: var(--space-xl);
 }
 
 .booking-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  border-left: 5px solid #ccc;
-  color: #000000; /* Ajouté pour garantir que le texte est toujours noir */
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border-left: 5px solid var(--color-border);
+  margin-bottom: var(--space-md);
+  transition: transform var(--transition-speed);
 }
 
 .booking-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.booking-actions {
-  margin-top: 1rem;
-}
-
-.delete-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.delete-btn:hover {
-  background-color: #c0392b;
-}
-
-/* Status-specific styles */
 .booking-card.pending {
-  border-left-color: #f39c12; /* Orange for pending */
+  border-left-color: var(--color-warning);
 }
 
 .booking-card.accepted {
-  border-left-color: #2ecc71; /* Green for accepted */
+  border-left-color: var(--color-success);
 }
 
 .booking-card.refused {
-  border-left-color: #e74c3c; /* Red for refused */
+  border-left-color: var(--color-danger);
 }
 
 .booking-card.cancelled {
-  border-left-color: #95a5a6; /* Gray for cancelled */
+  border-left-color: var(--color-text-light);
   opacity: 0.8;
 }
 
 .status {
-  font-weight: bold;
+  font-weight: 600;
 }
 
-.booking-card.pending .status {
-  color: #f39c12;
+.status.pending {
+  color: var(--color-warning);
 }
 
-.booking-card.accepted .status {
-  color: #2ecc71;
+.status.accepted {
+  color: var(--color-success);
 }
 
-.booking-card.refused .status {
-  color: #e74c3c;
+.status.refused {
+  color: var(--color-danger);
 }
 
-.booking-card.cancelled .status {
-  color: #95a5a6;
+.status.cancelled {
+  color: var(--color-text-light);
 }
 
-/* Section Pet Sitters */
-.pet-sitters-section {
-  margin-top: 3rem;
-}
-
-.sitters-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.sitter-card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-}
-
-.sitter-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.sitter-info {
-  padding: 1.5rem;
-  flex-grow: 1;
-}
-
-.sitter-info h3 {
-  margin-top: 0;
-  color: #2c3e50;
-}
-
-.experience {
-  color: #555;
-  font-style: italic;
-  margin: 1rem 0;
-}
-
-.contact {
-  color: #333333; /* Changé de #7f8c8d (gris clair) à noir plus foncé */
-  font-size: 0.9rem;
-}
-
-.card-footer {
-  background-color: #f8f9fa;
-  padding: 1rem;
-  text-align: right;
-  border-top: 1px solid #eee;
-}
-
-.view-more {
-  color: #3498db;
-  font-weight: bold;
-  transition: color 0.2s;
-}
-
-.sitter-card:hover .view-more {
-  color: #2980b9;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .pet-owner {
-    padding: 1rem;
+  .petowner-dashboard {
+    padding: var(--space-md);
   }
   
-  .sitters-list {
+  .dashboard-header {
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: center;
+  }
+  
+  .pets-grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* Empty state message */
-.empty-message {
-  text-align: center;
-  padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  margin: 2rem 0;
-  color: #6c757d;
-}
-
-/* Add booking button */
-.add-booking-btn {
-  display: block;
-  margin: 2rem auto;
-  padding: 0.75rem 1.5rem;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.add-booking-btn:hover {
-  background-color: #2980b9;
-}
-
-/* Bouton d'annulation de réservation */
-.cancel-btn {
-  margin-top: 1rem;
-  background-color: #f8d7da;
-  color: #721c24;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.cancel-btn:hover {
-  background-color: #f5c6cb;
-}
-
-/* Style pour les réservations en cours */
-.current-reservation {
-  border-left-color: #007bff;
-  background-color: #f8f9fa;
-}
-
-/* Message d'information quand aucune réservation n'est disponible */
-.no-bookings-message {
-  text-align: center;
-  color: #6c757d;
-  font-style: italic;
-  margin: 2rem 0;
-}
-
-/* Mode selector styles */
-.view-mode-selector {
-  margin: 1rem 0 2rem;
-  text-align: center;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.view-mode-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.mode-btn {
-  padding: 0.75rem 1.5rem;
-  border: 2px solid #3498db;
-  background-color: white;
-  color: #3498db;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mode-btn:hover {
-  background-color: #ecf0f1;
-}
-
-.mode-btn.active {
-  background-color: #3498db;
-  color: white;
-}
-
-/* Additional styles for actions */
-.accept-btn {
-  background-color: #2ecc71;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-right: 0.5rem;
-  transition: background-color 0.2s;
-}
-
-.accept-btn:hover {
-  background-color: #27ae60;
-}
-
-.refuse-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.refuse-btn:hover {
-  background-color: #c0392b;
+  
+  .pet-actions {
+    flex-direction: column;
+  }
 }
 </style>

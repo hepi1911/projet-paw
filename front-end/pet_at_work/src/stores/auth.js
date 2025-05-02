@@ -18,48 +18,48 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Charger l'utilisateur depuis le sessionStorage au démarrage
   const initializeAuth = () => {
-    const storedUser = sessionStorage.getItem('user')
-    const token = sessionStorage.getItem('token')
-    
-    if (storedUser && token) {
-      try {
+    try {
+      const storedUser = sessionStorage.getItem('user')
+      const token = sessionStorage.getItem('token')
+      
+      if (storedUser && token) {
         user.value = JSON.parse(storedUser)
         isAuthenticated.value = true
-        console.log('Authentication restored from sessionStorage')
-      } catch (e) {
-        console.error('Erreur lors de la restauration de l\'authentification:', e)
-        // En cas d'erreur, on nettoie le sessionStorage
-        sessionStorage.removeItem('user')
-        sessionStorage.removeItem('token')
+        console.log('Authentication restored from sessionStorage:', user.value)
+      } else {
         user.value = null
         isAuthenticated.value = false
-      }
-    } else {
-      // Si l'un des deux est manquant, on nettoie tout
-      if (storedUser || token) {
+        // Nettoyer la session si l'un des éléments est manquant
         sessionStorage.removeItem('user')
         sessionStorage.removeItem('token')
       }
+    } catch (e) {
+      console.error('Erreur lors de la restauration de l\'authentification:', e)
       user.value = null
       isAuthenticated.value = false
+      sessionStorage.removeItem('user')
+      sessionStorage.removeItem('token')
     }
   }
-
-  // Appeler initializeAuth immédiatement
-  initializeAuth()
 
   const login = async (email, password) => {
     try {
       const response = await apiService.login(email, password)
 
-      user.value = response.user || {} 
+      // S'assurer que response.user existe et contient les données nécessaires
+      if (!response.user) {
+        throw new Error('Les données utilisateur sont manquantes dans la réponse')
+      }
+
+      // Mettre à jour l'état
+      user.value = response.user
       isAuthenticated.value = true
-  
-      sessionStorage.setItem('user', JSON.stringify(user.value))
+
+      // Sauvegarder dans la session
+      sessionStorage.setItem('user', JSON.stringify(response.user))
+      sessionStorage.setItem('token', response.token)
       
-      console.log('Login successful, user role:', user.value.role)
-      
-      // Nous ne redirigeons plus l'utilisateur ici, cette logique est déplacée dans le composant LoginView
+      console.log('Login successful:', user.value)
       
       return { 
         success: true, 
@@ -68,7 +68,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch (error) {
       console.error('Erreur de connexion:', error)
-      return { success: false, error: 'Email ou mot de passe incorrect' }
+      // Nettoyer l'état en cas d'erreur
+      user.value = null
+      isAuthenticated.value = false
+      sessionStorage.removeItem('user')
+      sessionStorage.removeItem('token')
+      
+      return { success: false, error: error.message || 'Email ou mot de passe incorrect' }
     }
   }
   
@@ -109,13 +115,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = () => {
-    apiService.logout();
-    user.value = null;
-    isAuthenticated.value = false;
-    
-    // Rediriger vers la page de connexion
-    router.push('/login');
+    apiService.logout()
+    user.value = null
+    isAuthenticated.value = false
+    sessionStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    router.push('/login')
   }
+
+  // Appeler initializeAuth immédiatement
+  initializeAuth()
 
   return {
     user,

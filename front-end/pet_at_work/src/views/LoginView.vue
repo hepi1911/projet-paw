@@ -23,11 +23,14 @@
             placeholder="Votre mot de passe">
         </div>
 
-        <div v-if="error" class="error-message">
-          {{ error }}
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
         </div>
 
-        <button type="submit" class="submit-button">Login</button>
+        <button type="submit" class="submit-button" :disabled="loading">
+          <span v-if="loading">Loading...</span>
+          <span v-else>Login</span>
+        </button>
 
         <p class="register-link">
           No account yet? 
@@ -44,53 +47,51 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
-const error = ref('')
+const errorMessage = ref('')
+const loading = ref(false)
 
 const handleLogin = async () => {
-  // Récupérer l'ID de session actuel pour cette fenêtre
-  const sessionId = localStorage.getItem('currentSessionId')
+  errorMessage.value = ''
+  loading.value = true
   
-  if (!sessionId) {
-    console.error('Session ID manquant, impossible de se connecter')
-    error.value = 'Erreur système: session non initialisée'
-    return
-  }
-  
-  const result = await auth.login(email.value, password.value, sessionId)
-  if (result.success) {
-    // Récupérer le paramètre de redirection de l'URL s'il existe
-    const redirectPath = router.currentRoute.value.query.redirect
+  try {
+    const result = await authStore.login(email.value, password.value)
     
-    if (redirectPath) {
-      // Si un chemin de redirection est spécifié dans l'URL, l'utiliser
+    if (result.success) {
+      // Réinitialiser le store d'authentification
+      authStore.initializeAuth()
+      
+      console.log('Login success, role:', result.role)
+      
+      // Rediriger vers la page appropriée selon le rôle
+      const redirectPath = router.currentRoute.value.query.redirect || getDefaultRedirect(result.role)
       router.push(redirectPath)
     } else {
-      // Sinon, rediriger en fonction du rôle
-      const userData = JSON.parse(localStorage.getItem(`user_${sessionId}`) || '{}')
-      const userRole = userData.role
-      
-      switch (userRole) {
-        case 'petowner':
-          router.push('/petowner')
-          break
-        case 'petsitter':
-          router.push('/petsitter')
-          break
-        case 'company':
-          router.push('/company')
-          break
-        default:
-          // Si le rôle n'est pas reconnu, rediriger vers la page d'accueil
-          router.push('/')
-          break
-      }
+      errorMessage.value = result.error || 'Une erreur est survenue lors de la connexion'
     }
-  } else {
-    error.value = result.error
+  } catch (error) {
+    console.error('Erreur de connexion:', error)
+    errorMessage.value = error.message || 'Une erreur est survenue lors de la connexion'
+  } finally {
+    loading.value = false
+  }
+}
+
+// Fonction pour déterminer la redirection par défaut selon le rôle
+const getDefaultRedirect = (role) => {
+  switch (role) {
+    case 'petowner':
+      return '/petowner'
+    case 'petsitter':
+      return '/petsitter'
+    case 'company':
+      return '/company'
+    default:
+      return '/'
   }
 }
 </script>
@@ -158,7 +159,12 @@ input {
   transition: background-color 0.2s;
 }
 
-.submit-button:hover {
+.submit-button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.submit-button:hover:not(:disabled) {
   background-color: #3aa876;
 }
 

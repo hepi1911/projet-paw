@@ -58,36 +58,38 @@ export const apiService = {
         email: email,
         password
       })
+      
+      // Vérifier que la réponse contient les données nécessaires
+      if (!response.data || !response.data.access || !response.data.user_id) {
+        throw new Error('Réponse invalide du serveur')
+      }
+      
       // Stocker le token dans sessionStorage
       sessionStorage.setItem('token', response.data.access)
+      
+      // Construire l'objet utilisateur
+      const userData = {
+        user_id: response.data.user_id,
+        email: response.data.email,
+        name: response.data.name,
+        role: response.data.role,
+        // Ajouter d'autres champs si nécessaire
+      }
+      
       // Stocker les informations utilisateur
-      sessionStorage.setItem('user', JSON.stringify(response.data))
-      // Afficher le token pour le débogage
-      console.log('Token saved:', response.data.access)
-      console.log('Authorization header will be:', `Bearer ${response.data.access}`)
+      sessionStorage.setItem('user', JSON.stringify(userData))
+      
+      console.log('Login successful:', userData)
+      
       // Retourner les données nécessaires
       return {
         token: response.data.access,
-        user: response.data
+        user: userData
       }
     } catch (error) {
       console.error('Erreur de connexion dans api.js:', error)
-      // Si l'authentification échoue (erreur 401), essayez l'endpoint de débogage
       if (error.response && error.response.status === 401) {
-        try {
-          // Appeler l'endpoint de débogage pour obtenir plus d'informations
-          console.log('Tentative de diagnostic via debug-login...')
-          const debugResponse = await api.post('/debug-login/', {
-            email: email,
-            password
-          })
-          console.log('Résultat du diagnostic:', debugResponse.data)
-          // L'erreur est toujours lancée pour que l'utilisateur voit un message d'erreur
-          throw error
-        } catch (debugError) {
-          console.error('Erreur lors du diagnostic:', debugError)
-          throw error // Relancer l'erreur originale
-        }
+        throw new Error('Email ou mot de passe incorrect')
       }
       throw error
     }

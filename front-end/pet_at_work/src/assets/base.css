@@ -47,6 +47,15 @@
   --header-height: 64px;
   --max-content-width: 1200px;
   --transition-speed: 0.3s;
+
+  /* Button styles */
+  --button-primary-color: #645bff;
+  --button-secondary-color: #fff;
+  --button-hover-color: #111;
+  --button-arrow-width: 10px;
+  --button-arrow-stroke: 2px;
+  --button-border-radius: 20px;
+  --button-padding: 1em 1.8em;
 }
 
 *,
@@ -70,4 +79,92 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global button styles */
+.btn {
+  --primary-color: var(--button-primary-color);
+  --secondary-color: var(--button-secondary-color);
+  --hover-color: var(--button-hover-color);
+  --arrow-width: var(--button-arrow-width);
+  --arrow-stroke: var(--button-arrow-stroke);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--button-border-radius);
+  color: var(--secondary-color);
+  padding: var(--button-padding);
+  background: var(--primary-color);
+  display: flex;
+  transition: 0.2s background;
+  align-items: center;
+  gap: 0.6em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn .arrow-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn .arrow {
+  margin-top: 1px;
+  width: var(--arrow-width);
+  background: var(--secondary-color);
+  height: var(--arrow-stroke);
+  position: relative;
+  transition: 0.2s;
+}
+
+.btn .arrow::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  border: solid var(--secondary-color);
+  border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
+  display: inline-block;
+  top: -3px;
+  right: 3px;
+  transition: 0.2s;
+  padding: 3px;
+  transform: rotate(-45deg);
+}
+
+.btn:hover {
+  background-color: var(--hover-color);
+}
+
+.btn:hover .arrow {
+  background: var(--secondary-color);
+}
+
+.btn:hover .arrow:before {
+  right: 0;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Button variants */
+.btn-primary {
+  --primary-color: var(--color-primary);
+  --hover-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  --primary-color: var(--color-secondary);
+  --hover-color: var(--color-secondary-hover);
+}
+
+.btn-success {
+  --primary-color: var(--color-success);
+  --hover-color: var(--color-success-dark);
+}
+
+.btn-danger {
+  --primary-color: var(--color-danger);
+  --hover-color: var(--color-danger-dark);
 }

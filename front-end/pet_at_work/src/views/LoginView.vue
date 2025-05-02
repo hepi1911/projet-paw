@@ -27,9 +27,12 @@
           {{ errorMessage }}
         </div>
 
-        <button type="submit" class="submit-button" :disabled="loading">
+        <button type="submit" class="btn btn-primary" :disabled="loading">
           <span v-if="loading">Loading...</span>
           <span v-else>Login</span>
+          <div class="arrow-wrapper">
+            <div class="arrow"></div>
+          </div>
         </button>
 
         <p class="register-link">
@@ -102,20 +105,22 @@ const getDefaultRedirect = (role) => {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - var(--header-height));
-  background-color: #f5f5f5;
+  background: radial-gradient(ellipse, orangered, transparent, orange) orange;
   width: 100%;
-  margin: 0 auto;
-  padding: 0 1rem;
+  margin: 0;
+  padding: 0;
 }
 
 .login-container {
   width: 100%;
   max-width: 400px;
   padding: var(--space-xl);
-  background: var(--color-background);
-  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
   margin: 0 auto;
+  border: 2px solid var(--color-primary);
 }
 
 h1 {
@@ -154,24 +159,46 @@ input:focus {
 }
 
 .submit-button {
+  width: 100%;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: var(--space-md);
   background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: var(--space-md);
   border-radius: var(--border-radius-sm);
   font-size: 1rem;
-  cursor: pointer;
   font-weight: 600;
+  cursor: pointer;
   transition: background-color var(--transition-speed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.submit-button:disabled {
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-primary:disabled {
   background-color: var(--color-text-light);
   cursor: not-allowed;
 }
 
-.submit-button:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+.arrow-wrapper {
+  display: flex;
+  align-items: center;
+  margin-left: var(--space-sm);
+}
+
+.arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid white;
 }
 
 .error-message {

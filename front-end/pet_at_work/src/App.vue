@@ -32,21 +32,49 @@ const handleLogout = () => {
   <div class="app-container">
     <header>
       <nav>
-        <RouterLink to="/">{{ $t('navigation.home') }}</RouterLink>
+        <div class="nav-left">
+          <RouterLink to="/" class="logo-link">PetAtWork</RouterLink>
+        </div>
 
-        <template v-if="auth.isAuthenticated">
-          <RouterLink v-if="auth.user?.role === 'petowner'" to="/petowner">{{ $t('home.petowner') }}</RouterLink>
-          <RouterLink v-if="auth.user?.role === 'petsitter'" to="/petsitter">{{ $t('home.petsitter') }}</RouterLink>
-          <RouterLink v-if="auth.user?.role === 'company'" to="/company">{{ $t('home.company') }}</RouterLink>
-          <a href="#" @click.prevent="handleLogout" class="logout-btn">{{ $t('auth.logout') }}</a>
-        </template>
-        <template v-else>
-          <RouterLink to="/login">{{ $t('auth.login') }}</RouterLink>
-          <RouterLink to="/register">{{ $t('auth.register') }}</RouterLink>
-        </template>
-        
-        <div class="spacer"></div>
-        <LanguageSelector />
+        <div class="nav-right">
+          <div class="nav-actions">
+            <template v-if="auth.isAuthenticated">
+              <RouterLink v-if="auth.user?.role === 'petowner'" to="/petowner" class="nav-button">
+                {{ $t('home.petowner') }}
+                <span class="arrow-wrapper">
+                  <span class="arrow"></span>
+                </span>
+              </RouterLink>
+              <RouterLink v-if="auth.user?.role === 'petsitter'" to="/petsitter" class="nav-button">
+                {{ $t('home.petsitter') }}
+                <span class="arrow-wrapper">
+                  <span class="arrow"></span>
+                </span>
+              </RouterLink>
+              <RouterLink v-if="auth.user?.role === 'company'" to="/company" class="nav-button">
+                {{ $t('home.company') }}
+                <span class="arrow-wrapper">
+                  <span class="arrow"></span>
+                </span>
+              </RouterLink>
+              <a href="#" @click.prevent="handleLogout" class="nav-button logout-btn">
+                {{ $t('auth.logout') }}
+                <span class="arrow-wrapper">
+                  <span class="arrow"></span>
+                </span>
+              </a>
+            </template>
+            <template v-else>
+              <RouterLink to="/login" class="nav-button">
+                {{ $t('auth.login') }}
+                <span class="arrow-wrapper">
+                  <span class="arrow"></span>
+                </span>
+              </RouterLink>
+            </template>
+          </div>
+          <LanguageSelector class="language-selector-nav" />
+        </div>
       </nav>
     </header>
 
@@ -65,31 +93,192 @@ const handleLogout = () => {
   flex-direction: column;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+}
+
+.app-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
 }
 
 header {
-  background-color: var(--color-primary);
+  background: linear-gradient(to right, #ff8f00, #ff6d00);
   height: var(--header-height);
   position: fixed;
   width: 100%;
   top: 0;
   left: 0;
   z-index: 100;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 2px 8px rgba(255, 111, 0, 0.3);
+  border-bottom: 2px solid #ff6d00;
+  display: flex;
+  justify-content: center;
 }
 
 nav {
   height: 100%;
   width: 100%;
+  max-width: var(--max-content-width);
+  margin: 0;
   padding: 0 var(--space-md);
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  justify-content: space-between;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0;
+  margin: 0;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0;
+  margin: 0;
+}
+
+.logo-link {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  margin: 0;
+}
+
+.nav-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.nav-button {
+  --primary-color: white;
+  --secondary-color: var(--button-secondary-color);
+  --hover-color: #fff3e0;
+  --arrow-width: var(--button-arrow-width);
+  --arrow-stroke: var(--button-arrow-stroke);
+  box-sizing: border-box;
+  border: 2px solid white;
+  border-radius: var(--button-border-radius);
+  color: white;
+  padding: 0.8em 1.4em;
+  background: transparent;
+  display: flex;
+  transition: 0.2s all;
+  align-items: center;
+  gap: 0.6em;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.nav-button .arrow-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-button .arrow {
+  margin-top: 1px;
+  width: var(--arrow-width);
+  background: white;
+  height: var(--arrow-stroke);
+  position: relative;
+  transition: 0.2s;
+}
+
+.nav-button .arrow::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  border: solid white;
+  border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
+  display: inline-block;
+  top: -3px;
+  right: 3px;
+  transition: 0.2s;
+  padding: 3px;
+  transform: rotate(-45deg);
+}
+
+.nav-button:hover {
+  background-color: white;
+  color: #ff6d00;
+}
+
+.nav-button:hover .arrow {
+  background: #ff6d00;
+}
+
+.nav-button:hover .arrow:before {
+  right: 0;
+  border-color: #ff6d00;
+}
+
+.nav-button.router-link-active {
+  background-color: #ffc166;
+}
+
+.logout-btn {
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.logout-btn:hover {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: white;
+}
+
+.language-selector-nav {
+  margin-left: var(--space-xl);
+}
+
+.language-selector-nav :deep(.language-button) {
+  color: var(--color-text);
+  border: 2px solid var(--color-primary);
+}
+
+.language-selector-nav :deep(.language-button:hover) {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  nav {
+    padding: 0 var(--space-xs);
+  }
+
+  .nav-actions {
+    gap: var(--space-xs);
+  }
+
+  .nav-button {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.9rem;
+  }
+
+  .logo-link {
+    font-size: 1.2rem;
+  }
 }
 
 /* Navigation links */
 nav a {
-  color: white;
+  color: var(--color-primary);
   text-decoration: none;
   padding: var(--space-sm);
   border-radius: var(--border-radius-sm);
@@ -98,12 +287,12 @@ nav a {
 }
 
 nav a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: transparent;
 }
 
 nav a.router-link-active {
   font-weight: 600;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: transparent;
 }
 
 /* User actions */
@@ -135,6 +324,7 @@ main {
   flex: 1;
   width: 100%;
   margin-top: var(--header-height);
+  padding: 0;
 }
 
 /* Responsive */
@@ -164,8 +354,10 @@ main {
 /* Layout */
 .view-container {
   min-height: calc(100vh - var(--header-height));
-  padding: var(--space-md);
-  background: var(--color-background-soft);
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  background: radial-gradient(ellipse, orangered, transparent, orange) orange;
 }
 
 /* Cards */
@@ -177,7 +369,7 @@ main {
   transition: transform var(--transition-speed);
 }
 
-.card:hover {
+.card:not(.login-container):not(.register-container):hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
 }
@@ -309,7 +501,12 @@ main {
 }
 
 .accept-btn {
-  composes: action-btn;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
   background-color: #2ecc71;
   color: white;
 }
@@ -319,7 +516,12 @@ main {
 }
 
 .refuse-btn {
-  composes: action-btn;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
   background-color: #e74c3c;
   color: white;
 }
@@ -329,7 +531,12 @@ main {
 }
 
 .delete-btn {
-  composes: action-btn;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
   background-color: #e74c3c;
   color: white;
 }

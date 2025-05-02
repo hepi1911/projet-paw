@@ -99,8 +99,12 @@
           {{ error }}
         </div>
 
-        <button type="submit" class="submit-button" :disabled="isLoading">
-          {{ isLoading ? 'Chargement...' : "S'inscrire" }}
+        <button type="submit" class="btn btn-primary" :disabled="isLoading">
+          <span v-if="isLoading">Inscription en cours...</span>
+          <span v-else>{{ $t('auth.register') }}</span>
+          <div class="arrow-wrapper">
+            <div class="arrow"></div>
+          </div>
         </button>
 
         <p class="login-link">
@@ -235,26 +239,49 @@ const handleContinue = () => {
 </script>
 
 <style scoped>
+.view-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - var(--header-height));
+  background: radial-gradient(ellipse, orangered, transparent, orange) orange;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .register-container {
   width: 100%;
-  max-width: 500px;
-  margin: var(--space-lg) auto;
+  max-width: 400px;
   padding: var(--space-xl);
-  background: var(--color-background);
-  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
+  margin: 0 auto;
+  border: 2px solid var(--color-primary);
+}
+
+.register-container:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
+h1, h2 {
+  color: var(--color-heading);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+  background: linear-gradient(135deg, var(--color-heading) 0%, var(--color-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .register-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-}
-
-h2 {
-  color: var(--color-heading);
-  text-align: center;
-  margin-bottom: var(--space-lg);
 }
 
 .role-buttons {
@@ -378,6 +405,28 @@ h2 {
 .next-btn:hover,
 .submit-btn:hover {
   background-color: var(--color-primary-hover);
+}
+
+.submit-button {
+  width: 100%;
+  padding: var(--space-md);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.submit-button:disabled {
+  background-color: var(--color-text-light);
+  cursor: not-allowed;
 }
 
 .error-message {

@@ -271,74 +271,193 @@
 
           <!-- Section Pet Sitters - Visible pour tous les utilisateurs -->
           <div class="pet-sitters-section">
-            <h2>{{ $t('petowner.available_petsitters') }}</h2>
+            <h2 class="section-title">{{ $t('petowner.available_petsitters') }}</h2>
             
-            <!-- Barre de recherche -->
-            <div class="search-filter-container">
-              <div class="search-box">
-                <i class="search-icon">🔍</i>
-                <input 
-                  type="text" 
-                  v-model="searchQuery" 
-                  placeholder="Rechercher un pet sitter..." 
-                  class="search-input"
-                />
+            <!-- Filtres et recherche -->
+            <div class="sitter-filters">
+              <div class="search-container">
+                <div class="search-box">
+                  <i class="search-icon">🔍</i>
+                  <input 
+                    type="text" 
+                    v-model="searchQuery" 
+                    placeholder="Rechercher un pet sitter..." 
+                    class="search-input"
+                  />
+                </div>
+                <div class="filter-tags">
+                  <button 
+                    v-for="(tag, index) in filterTags" 
+                    :key="index" 
+                    class="filter-tag"
+                    :class="{ active: selectedTags.includes(tag.value) }"
+                    @click="toggleFilterTag(tag.value)"
+                  >
+                    {{ tag.label }}
+                  </button>
+                </div>
               </div>
+            </div>
+            
+            <!-- Affichage en carte ou liste -->
+            <div class="view-toggle">
+              <button 
+                :class="['view-btn', { active: viewType === 'grid' }]" 
+                @click="viewType = 'grid'"
+              >
+                <span class="grid-icon">▥</span> Grille
+              </button>
+              <button 
+                :class="['view-btn', { active: viewType === 'list' }]" 
+                @click="viewType = 'list'"
+              >
+                <span class="list-icon">☰</span> Liste
+              </button>
             </div>
             
             <!-- Message si aucun pet sitter trouvé -->
             <div v-if="filteredPetSitters.length === 0" class="no-results">
-              <p>Aucun pet sitter ne correspond à votre recherche</p>
+              <div class="no-results-icon">🔎</div>
+              <h3>Aucun résultat trouvé</h3>
+              <p>Aucun pet sitter ne correspond à votre recherche. Essayez d'autres critères.</p>
             </div>
             
-            <!-- Grille de pet sitters -->
-            <div class="sitters-grid">
+            <!-- Affichage en grille -->
+            <div v-else-if="viewType === 'grid'" class="sitters-grid">
               <div 
                 v-for="sitter in filteredPetSitters" 
                 :key="sitter.id" 
                 class="sitter-card"
                 @click="handleSitterClick(sitter.id)"
               >
-                <div class="sitter-avatar">
-                  <div class="avatar-placeholder">
-                    {{ getInitials(sitter.name) }}
+                <div class="card-banner" :style="{ backgroundColor: getRandomColor(sitter.id) }"></div>
+                <div class="card-content">
+                  <div class="sitter-avatar">
+                    <div class="avatar-placeholder" :style="{ backgroundColor: getRandomColor(sitter.id) }">
+                      {{ getInitials(sitter.name) }}
+                    </div>
                   </div>
-                </div>
-                
-                <div class="sitter-content">
+                  
                   <h3 class="sitter-name">{{ sitter.name }}</h3>
                   
                   <div class="sitter-rating">
                     <div class="stars">
-                      <span class="star filled">★</span>
-                      <span class="star filled">★</span>
-                      <span class="star filled">★</span>
-                      <span class="star filled">★</span>
-                      <span class="star">☆</span>
+                      <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= (sitter.rating || 4) }">
+                        {{ n <= (sitter.rating || 4) ? '★' : '☆' }}
+                      </span>
                     </div>
-                    <span class="rating-score">4.0</span>
+                    <span class="rating-score">{{ sitter.rating || '4.0' }}</span>
+                  </div>
+                  
+                  <div class="sitter-badges">
+                    <span class="badge" v-if="sitter.capacity">
+                      <span class="badge-icon">🏠</span> {{ sitter.capacity }} animaux
+                    </span>
+                    <span class="badge verified">
+                      <span class="badge-icon">✓</span> Vérifié
+                    </span>
                   </div>
                   
                   <p class="experience-preview">{{ truncateExperience(sitter.experience) }}</p>
                   
                   <div class="sitter-tags">
-                    <span class="tag">Chiens</span>
-                    <span class="tag">Chats</span>
-                    <span class="tag">À domicile</span>
+                    <span class="tag" v-for="(tag, index) in getRandomTags(sitter.id)" :key="index">
+                      {{ tag }}
+                    </span>
                   </div>
                   
                   <div class="sitter-contact">
-                    <span class="contact-label">{{ $t('petowner.contact') }}:</span>
-                    <span class="contact-value">{{ sitter.email }}</span>
+                    <div class="contact-email">
+                      <span class="contact-icon">✉️</span>
+                      <span class="contact-value">{{ sitter.email }}</span>
+                    </div>
+                    <div class="contact-address" v-if="sitter.address">
+                      <span class="contact-icon">📍</span>
+                      <span class="contact-value">{{ truncateAddress(sitter.address) }}</span>
+                    </div>
                   </div>
                 </div>
                 
                 <div class="card-footer">
                   <button class="view-details-btn">
-                    {{ $t('petowner.view_more') }} →
+                    {{ $t('petowner.view_more') }}
+                    <span class="arrow-icon">→</span>
                   </button>
                 </div>
               </div>
+            </div>
+            
+            <!-- Affichage en liste -->
+            <div v-else class="sitters-list">
+              <div 
+                v-for="sitter in filteredPetSitters" 
+                :key="sitter.id" 
+                class="sitter-list-item"
+                @click="handleSitterClick(sitter.id)"
+              >
+                <div class="sitter-list-avatar">
+                  <div class="avatar-placeholder" :style="{ backgroundColor: getRandomColor(sitter.id) }">
+                    {{ getInitials(sitter.name) }}
+                  </div>
+                </div>
+                
+                <div class="sitter-list-info">
+                  <div class="sitter-list-header">
+                    <h3 class="sitter-name">{{ sitter.name }}</h3>
+                    <div class="sitter-rating">
+                      <div class="stars">
+                        <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= (sitter.rating || 4) }">
+                          {{ n <= (sitter.rating || 4) ? '★' : '☆' }}
+                        </span>
+                      </div>
+                      <span class="rating-score">{{ sitter.rating || '4.0' }}</span>
+                    </div>
+                  </div>
+                  
+                  <p class="experience-preview">{{ truncateExperience(sitter.experience) }}</p>
+                  
+                  <div class="sitter-list-footer">
+                    <div class="sitter-tags">
+                      <span class="tag" v-for="(tag, index) in getRandomTags(sitter.id)" :key="index">
+                        {{ tag }}
+                      </span>
+                    </div>
+                    
+                    <button class="view-details-btn">
+                      {{ $t('petowner.view_more') }}
+                      <span class="arrow-icon">→</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination" v-if="totalPages > 1">
+              <button 
+                class="page-btn prev" 
+                :disabled="currentPage === 1"
+                @click="currentPage--"
+              >
+                «
+              </button>
+              
+              <button 
+                v-for="page in displayedPages" 
+                :key="page"
+                :class="['page-btn', { active: currentPage === page }]"
+                @click="currentPage = page"
+              >
+                {{ page }}
+              </button>
+              
+              <button 
+                class="page-btn next" 
+                :disabled="currentPage === totalPages"
+                @click="currentPage++"
+              >
+                »
+              </button>
             </div>
           </div>
 
@@ -380,6 +499,22 @@ const isDeleting = ref(null);
 const searchQuery = ref('');
 const activeTab = ref('list');
 const selectedAnimalType = ref(null);
+const viewType = ref('grid'); // 'grid' ou 'list'
+const filterTags = ref([
+  { label: 'Chiens', value: 'dogs' },
+  { label: 'Chats', value: 'cats' },
+  { label: 'À domicile', value: 'home' }
+]);
+const selectedTags = ref([]);
+const currentPage = ref(1);
+const totalPages = ref(1);
+const displayedPages = computed(() => {
+  const pages = [];
+  for (let i = 1; i <= totalPages.value; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
 
 // Calculer si l'utilisateur est connecté
 const isLoggedIn = computed(() => {
@@ -653,10 +788,18 @@ const userHasRole = (role) => {
 };
 
 const filteredPetSitters = computed(() => {
-  if (!searchQuery.value) return petSitters.value;
-  return petSitters.value.filter(sitter => 
-    sitter.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  let sitters = petSitters.value;
+  if (searchQuery.value) {
+    sitters = sitters.filter(sitter => 
+      sitter.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  }
+  if (selectedTags.value.length > 0) {
+    sitters = sitters.filter(sitter => 
+      selectedTags.value.some(tag => sitter.tags.includes(tag))
+    );
+  }
+  return sitters;
 });
 
 const getInitials = (name) => {
@@ -672,6 +815,29 @@ const getAnimalEmoji = (breed) => {
   if (breedLower.includes('cat') || breedLower.includes('chat')) return '🐈';
   return '🐾';
 };
+
+const getRandomColor = (id) => {
+  const colors = ['#f9c74f', '#90be6d', '#f8961e', '#577590', '#43aa8b'];
+  return colors[id % colors.length];
+};
+
+const getRandomTags = (id) => {
+  const tags = ['Chiens', 'Chats', 'À domicile', 'Promenade', 'Garde de nuit'];
+  return tags.slice(0, (id % tags.length) + 1);
+};
+
+const truncateAddress = (address) => {
+  if (!address) return '';
+  return address.length > 30 ? address.substring(0, 30) + '...' : address;
+};
+
+const toggleFilterTag = (tag) => {
+  if (selectedTags.value.includes(tag)) {
+    selectedTags.value = selectedTags.value.filter(t => t !== tag);
+  } else {
+    selectedTags.value.push(tag);
+  }
+};
 </script>
 
 <style scoped>
@@ -682,200 +848,19 @@ const getAnimalEmoji = (breed) => {
   padding: var(--space-xl);
 }
 
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-xl);
-}
-
-.profile-section {
-  margin-bottom: var(--space-xl);
-}
-
-.profile-card {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
-  border-left: 5px solid var(--color-primary);
-}
-
-.profile-info {
-  margin-bottom: var(--space-lg);
-}
-
-.profile-actions {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.edit-profile-btn {
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color var(--transition-speed);
-}
-
-.edit-profile-btn:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.pets-section {
-  margin-bottom: var(--space-xl);
-}
-
-.pets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: var(--space-lg);
-  margin-top: var(--space-lg);
-}
-
-.pet-card {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
-  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.pet-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-}
-
-.pet-info {
-  margin-top: var(--space-md);
-  color: var(--color-text);
-}
-
-.pet-actions {
-  margin-top: var(--space-md);
-  display: flex;
-  gap: var(--space-sm);
-}
-
-.edit-pet-btn {
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color var(--transition-speed);
-}
-
-.edit-pet-btn:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.delete-pet-btn {
-  background-color: var(--color-danger);
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color var(--transition-speed);
-}
-
-.delete-pet-btn:hover {
-  background-color: var(--color-danger-dark);
-}
-
-.add-pet-btn {
-  background-color: var(--color-success);
-  color: white;
-  border: none;
-  padding: var(--space-md);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color var(--transition-speed);
-  width: 100%;
-}
-
-.add-pet-btn:hover {
-  background-color: var(--color-success-dark);
-}
-
-.loading, .empty-message {
-  text-align: center;
-  padding: var(--space-xl);
-  background-color: var(--color-background-mute);
-  border-radius: var(--border-radius-md);
-  margin: var(--space-xl) 0;
-  color: var(--color-text-light);
-}
-
-.bookings-section {
-  margin-bottom: var(--space-xl);
-}
-
-.booking-card {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
-  border-left: 5px solid var(--color-border);
-  margin-bottom: var(--space-md);
-  transition: transform var(--transition-speed);
-}
-
-.booking-card:hover {
-  transform: translateY(-3px);
-}
-
-.booking-card.pending {
-  border-left-color: var(--color-warning);
-}
-
-.booking-card.accepted {
-  border-left-color: var(--color-success);
-}
-
-.booking-card.refused {
-  border-left-color: var(--color-danger);
-}
-
-.booking-card.cancelled {
-  border-left-color: var(--color-text-light);
-  opacity: 0.8;
-}
-
-.status {
-  font-weight: 600;
-}
-
-.status.pending {
-  color: var(--color-warning);
-}
-
-.status.accepted {
-  color: var(--color-success);
-}
-
-.status.refused {
-  color: var(--color-danger);
-}
-
-.status.cancelled {
-  color: var(--color-text-light);
-}
-
+/* Additional styles for the new pet sitters section */
 .pet-sitters-section {
   margin-bottom: var(--space-xl);
 }
 
-.search-filter-container {
+.sitter-filters {
   margin-bottom: var(--space-lg);
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
 .search-box {
@@ -900,6 +885,47 @@ const getAnimalEmoji = (breed) => {
   color: var(--color-text);
 }
 
+.filter-tags {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.filter-tag {
+  background-color: var(--color-background-mute);
+  color: var(--color-text-light);
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+.filter-tag.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.view-toggle {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.view-btn {
+  background-color: var(--color-background-mute);
+  color: var(--color-text-light);
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+.view-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
 .sitters-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -909,15 +935,23 @@ const getAnimalEmoji = (breed) => {
 .sitter-card {
   background-color: var(--color-background);
   border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
   box-shadow: var(--shadow-md);
-  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+  overflow: hidden;
   cursor: pointer;
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .sitter-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
+}
+
+.card-banner {
+  height: 50px;
+}
+
+.card-content {
+  padding: var(--space-md);
 }
 
 .sitter-avatar {
@@ -940,14 +974,11 @@ const getAnimalEmoji = (breed) => {
   font-size: var(--font-size-lg);
 }
 
-.sitter-content {
-  text-align: center;
-}
-
 .sitter-name {
   font-size: var(--font-size-lg);
   font-weight: bold;
   margin-bottom: var(--space-sm);
+  text-align: center;
 }
 
 .sitter-rating {
@@ -975,9 +1006,30 @@ const getAnimalEmoji = (breed) => {
   font-weight: bold;
 }
 
+.sitter-badges {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.badge {
+  background-color: var(--color-background-mute);
+  color: var(--color-text-light);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.badge.verified {
+  background-color: var(--color-success);
+  color: white;
+}
+
 .experience-preview {
   margin-bottom: var(--space-sm);
   color: var(--color-text-light);
+  text-align: center;
 }
 
 .sitter-tags {
@@ -999,8 +1051,8 @@ const getAnimalEmoji = (breed) => {
   margin-bottom: var(--space-md);
 }
 
-.contact-label {
-  font-weight: bold;
+.contact-icon {
+  margin-right: var(--space-xs);
 }
 
 .contact-value {
@@ -1035,160 +1087,38 @@ const getAnimalEmoji = (breed) => {
   color: var(--color-text-light);
 }
 
-.animals-section .animal-panel {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-lg);
-}
-
-.panel-tabs {
-  display: flex;
-  justify-content: space-between;
+.no-results-icon {
+  font-size: var(--font-size-xl);
   margin-bottom: var(--space-md);
 }
 
-.tab-btn {
-  background-color: var(--color-background-mute);
-  color: var(--color-text-light);
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color var(--transition-speed);
-}
-
-.tab-btn.active {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.tab-btn:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.panel-content {
-  margin-top: var(--space-md);
-}
-
-.add-animal-content .form-step {
+.pagination {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.form-row {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.form-group {
-  flex: 1;
-}
-
-.input-container {
-  display: flex;
-  align-items: center;
-  background-color: var(--color-background-mute);
-  border-radius: var(--border-radius-sm);
-  padding: var(--space-sm);
-}
-
-.input-icon {
-  margin-right: var(--space-sm);
-  color: var(--color-text-light);
-}
-
-.textarea-container {
-  align-items: flex-start;
-}
-
-.add-animal-btn {
-  background-color: var(--color-success);
-  color: white;
-  border: none;
-  padding: var(--space-md);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color var(--transition-speed);
-  width: 100%;
-}
-
-.add-animal-btn:hover {
-  background-color: var(--color-success-dark);
-}
-
-.animals-list-content .animals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: var(--space-lg);
-}
-
-.animal-card {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
-  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.animal-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-}
-
-.animal-avatar .avatar-image {
-  font-size: var(--font-size-xl);
-  text-align: center;
-}
-
-.animal-content .animal-name {
-  font-size: var(--font-size-lg);
-  font-weight: bold;
-  margin-bottom: var(--space-sm);
-}
-
-.animal-details .detail {
-  display: flex;
-  align-items: center;
+  justify-content: center;
   gap: var(--space-sm);
+  margin-top: var(--space-lg);
 }
 
-.detail-icon {
-  color: var(--color-text-light);
-}
-
-.no-animals {
-  text-align: center;
-  padding: var(--space-lg);
+.page-btn {
   background-color: var(--color-background-mute);
-  border-radius: var(--border-radius-md);
-  margin: var(--space-lg) 0;
   color: var(--color-text-light);
-}
-
-.no-animals-illustration {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--space-md);
-}
-
-.add-first-animal-btn {
-  background-color: var(--color-primary);
-  color: white;
   border: none;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--border-radius-sm);
   cursor: pointer;
-  font-weight: 600;
-  transition: background-color var(--transition-speed);
+  font-size: var(--font-size-sm);
 }
 
-.add-first-animal-btn:hover {
-  background-color: var(--color-primary-hover);
+.page-btn.active {
+  background-color: var(--color-primary);
+  color: white;
 }
 
+.page-btn.prev, .page-btn.next {
+  font-weight: bold;
+}
+
+/* Styles for the new animal form sections */
 .animal-type-selector {
   display: flex;
   gap: var(--space-sm);
@@ -1335,6 +1265,63 @@ const getAnimalEmoji = (breed) => {
   font-size: 0.875rem;
 }
 
+/* Styles for the pet sitters in list view */
+.sitters-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.sitter-list-item {
+  display: flex;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.sitter-list-item:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.sitter-list-avatar {
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sitter-list-info {
+  flex: 1;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.sitter-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.sitter-list-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.contact-email, .contact-address {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+/* Responsive design for pet sitters section */
 @media (max-width: 768px) {
   .petowner-dashboard {
     padding: var(--space-md);
@@ -1346,12 +1333,205 @@ const getAnimalEmoji = (breed) => {
     text-align: center;
   }
   
-  .pets-grid, .sitters-grid, .animals-list-content .animals-grid {
+  .sitters-grid {
     grid-template-columns: 1fr;
   }
   
-  .pet-actions {
+  .sitter-filters {
     flex-direction: column;
   }
+  
+  .search-container {
+    width: 100%;
+  }
+  
+  .filter-tags {
+    flex-wrap: wrap;
+  }
+  
+  .sitter-list-item {
+    flex-direction: column;
+  }
+  
+  .sitter-list-avatar {
+    align-self: center;
+    margin-top: var(--space-md);
+  }
+  
+  .sitter-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+  
+  .sitter-list-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+}
+
+/* Styles for the animal form and list */
+.animal-panel {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+}
+
+.panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: var(--space-md);
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  color: var(--color-primary);
+  border-bottom: 3px solid var(--color-primary);
+  font-weight: 600;
+}
+
+.tab-icon {
+  margin-right: var(--space-xs);
+}
+
+.panel-content {
+  padding: var(--space-lg);
+}
+
+.add-animal-content, .animals-list-content {
+  min-height: 200px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.input-icon {
+  margin-right: var(--space-sm);
+}
+
+.animals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-md);
+}
+
+.animal-card {
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.animal-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.animal-avatar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-sm);
+}
+
+.avatar-image {
+  width: 50px;
+  height: 50px;
+  background-color: var(--color-primary-light, #e0f2fe);
+  color: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.animal-content {
+  text-align: center;
+}
+
+.animal-name {
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-lg);
+}
+
+.detail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+.detail-icon {
+  font-size: 1.2rem;
+}
+
+.no-animals {
+  text-align: center;
+  padding: var(--space-lg) 0;
+}
+
+.no-animals-illustration {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+  color: var(--color-text-light);
+}
+
+.no-animals-text {
+  margin-bottom: var(--space-md);
+  color: var(--color-text-light);
+}
+
+.add-first-animal-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 auto;
+  font-weight: 600;
+}
+
+.add-animal-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+}
+
+.add-animal-btn:hover, .add-first-animal-btn:hover {
+  background-color: var(--color-primary-hover);
 }
 </style>

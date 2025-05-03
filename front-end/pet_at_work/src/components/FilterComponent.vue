@@ -109,60 +109,64 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.filter-container {
-  background-color: #f9f9f9;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.filter-section {
+  margin-bottom: var(--space-lg);
 }
 
 h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  color: #333;
-  font-size: 1.2rem;
+  color: var(--color-heading);
+  margin-bottom: var(--space-md);
 }
 
-.filter-group {
-  margin-bottom: 1rem;
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 
 label {
-  display: block;
-  margin-bottom: 0.5rem;
+  color: var(--color-text);
   font-weight: 500;
-  color: #555;
 }
 
 input, select {
-  width: 100%;
-  padding: 0.6rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
 }
 
+input:focus, select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
 .reset-button {
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.6rem 1rem;
+  background-color: var(--color-background-mute);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-sm) var(--space-md);
   cursor: pointer;
-  margin-top: 1rem;
+  margin-top: var(--space-md);
   font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed);
 }
 
 .reset-button:hover {
-  background-color: #e0e0e0;
+  background-color: var(--color-border);
 }
 
 @media (min-width: 768px) {
   .filter-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: var(--space-md);
   }
   
   h3, .reset-button {

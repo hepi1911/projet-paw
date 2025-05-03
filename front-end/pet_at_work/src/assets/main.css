@@ -1,29 +1,16 @@
 @import './base.css';
 
-/* Style global pour forcer tout le texte en noir */
-* {
-  color: #000000 !important;
-}
-
-/* Exceptions pour les éléments où le texte blanc est nécessaire (boutons, etc.) */
-button, .btn, [class*="btn-"], [type="submit"], [type="button"],
-.modal-backdrop, .modal-content button {
-  color: inherit !important;
-}
-
 #app {
   max-width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 0;
+  padding: 0;
   font-weight: normal;
 }
 
 a,
 .green {
   text-decoration: none;
-  color: #000000 !important;
   transition: 0.4s;
-  padding: 3px;
 }
 
 @media (hover: hover) {
@@ -41,6 +28,6 @@ a,
   #app {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+    padding: 0;
   }
 }

@@ -743,516 +743,102 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.view-container {
-  background-color: #f5f5f5;
-  min-height: calc(100vh - var(--header-height));
-}
-
-.pet-sitter-dashboard {
+.petsitter-dashboard {
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--space-xl);
 }
 
-h1, h2 {
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.section-description {
-  text-align: center;
-  max-width: 600px;
-  margin: 0 auto 2rem;
-  color: #6c757d;
-}
-
-/* Style pour les sections de réservations */
-.pending-bookings-section,
-.bookings-section {
-  margin-bottom: 3rem;
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 1.5rem;
-}
-
-.bookings-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.booking-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 5px solid #ccc;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.booking-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Status-specific styles */
-.booking-card.pending {
-  border-left-color: #f39c12;
-}
-
-.booking-card.accepted {
-  border-left-color: #2ecc71;
-}
-
-.booking-card.refused {
-  border-left-color: #e74c3c;
-}
-
-.booking-card.cancelled {
-  border-left-color: #95a5a6;
-  opacity: 0.8;
-}
-
-.status {
-  font-weight: bold;
-}
-
-.booking-card.pending .status {
-  color: #f39c12;
-}
-
-.booking-card.accepted .status {
-  color: #2ecc71;
-}
-
-.booking-card.refused .status {
-  color: #e74c3c;
-}
-
-.booking-card.cancelled .status {
-  color: #95a5a6;
-}
-
-/* Style pour les boutons d'action */
-.booking-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.accept-btn, .finish-btn, .reservation-btn {
-  background-color: #2ecc71;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.accept-btn:hover, .finish-btn:hover, .reservation-btn:hover {
-  background-color: #27ae60;
-}
-
-.refuse-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.refuse-btn:hover {
-  background-color: #c0392b;
-}
-
-button:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
-}
-
-/* Style pour la section des compagnies */
-.companies-section {
-  margin-top: 3rem;
-}
-
-.companies-list-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.company-card-vertical {
-  background-color: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  display: flex;
-  flex-direction: column;
-  border-top: 5px solid #3498db;
-}
-
-.company-card-vertical:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.company-info {
-  padding: 1.5rem;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.company-info h3 {
-  margin-top: 0;
-  color: #2c3e50;
-  font-size: 1.2rem;
-}
-
-.capacity {
-  color: #3498db;
-  font-weight: bold;
-  margin: 0.5rem 0;
-}
-
-.address {
-  color: #333333; /* Changé de #7f8c8d (gris clair) à noir plus foncé */
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
-}
-
-.company-card-actions {
-  margin-top: auto;
-}
-
-/* Style pour le message vide */
-.empty-message {
-  text-align: center;
-  padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  margin: 2rem 0;
-  color: #6c757d;
-}
-
-/* Modal Styles */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 2rem;
-}
-
-.modal-content h3 {
-  color: #2c3e50;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.reservation-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.form-group input, 
-.form-group textarea,
-.form-group select {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.form-group textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
-}
-
-.cancel-btn {
-  background-color: #f8f9fa;
-  color: #6c757d;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.cancel-btn:hover {
-  background-color: #e9ecef;
-}
-
-.submit-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.submit-btn:hover {
-  background-color: #2980b9;
-}
-
-/* Style pour la section profil */
-.profile-section {
-  margin-bottom: 3rem;
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 1.5rem;
-}
-
-.profile-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 5px solid #3498db;
+.dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--space-xl);
 }
 
-.profile-info h3 {
-  margin-top: 0;
-  color: #2c3e50;
+.profile-header {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-xl);
 }
 
-.profile-info p {
-  margin: 0.5rem 0;
-  color: #555;
+.experience-section {
+  margin-top: var(--space-lg);
+  white-space: pre-line;
+  color: var(--color-text);
 }
 
-.edit-profile-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.edit-profile-btn:hover {
-  background-color: #2980b9;
-}
-
-.profile-nav {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.profile-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.profile-btn:hover {
-  background-color: #2980b9;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .pet-sitter-dashboard {
-    padding: 1rem;
-  }
-  
-  .companies-list-vertical {
-    flex-direction: column;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .cancel-btn, .submit-btn {
-    width: 100%;
-  }
-}
-
-
-/* Style pour le bouton de réservation d'entreprise pour un animal */
-.book-company-btn {
-  background-color: #3498db;
-  color: white;
-}
-
-.book-company-btn:hover {
-  background-color: #2980b9;
-}
-
-/* Style pour la modal de réservation d'entreprise */
-.companies-list-modal {
+.stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0;
-  max-height: 200px;
-  overflow-y: auto;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  margin: var(--space-lg) 0;
 }
 
-.company-item-modal {
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  padding: 1rem;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.company-item-modal:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.company-item-modal.selected {
-  border-color: #3498db;
-  background-color: #ebf5fb;
-}
-
-.company-item-modal h4 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-}
-.company-item-modal p {
-  color: #333333; /* Changé de gris clair à noir plus foncé */
-  margin: 0.2rem 0;
-}
-
-/* Styles pour l'indicateur de chargement */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.loading-spinner {
-  border: 8px solid #f3f3f3;
-  border-top: 8px solid #3498db;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.error-message {
-  background-color: #ffebee;
-  border-left: 5px solid #e53935;
-  color: #b71c1c;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin: 2rem 0;
+.stat-card {
+  background-color: var(--color-background);
+  padding: var(--space-lg);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
   text-align: center;
 }
 
-.error-message p {
-  margin-bottom: 1rem;
-  font-weight: 500;
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--color-primary);
 }
 
-.retry-btn {
-  background-color: #e53935;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.75rem 1.5rem;
+.stat-label {
+  color: var(--color-text-light);
+  margin-top: var(--space-sm);
+}
+
+.companies-section {
+  margin-top: var(--space-xl);
+}
+
+.company-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-md);
   cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-.retry-btn:hover {
-  background-color: #c62828;
+.company-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
 
-.reservation-info {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background-color: #fff8e1;
-  border-left: 4px solid #ffc107;
-  border-radius: 4px;
-  font-size: 0.9rem;
+.loading, .empty-message {
+  text-align: center;
+  padding: var(--space-xl);
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-md);
+  margin: var(--space-xl) 0;
+  color: var(--color-text-light);
 }
 
-.reservation-info p {
-  margin: 0;
-  color: #856404;
+@media (max-width: 768px) {
+  .petsitter-dashboard {
+    padding: var(--space-md);
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: center;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
 }
 </style>

@@ -142,63 +142,87 @@ export default {
 
 <style scoped>
 .view-container {
-  background-color: #f5f5f5;
+  background-color: var(--color-background-soft);
   min-height: calc(100vh - var(--header-height));
-  padding: 2rem 1rem;
+  padding: var(--space-xl);
 }
 
 .profile-container {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--color-background);
+  padding: var(--space-xl);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .profile {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--space-lg);
 }
 
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-lg);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 label {
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 input, textarea {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
 }
 
 textarea {
   min-height: 100px;
+  resize: vertical;
 }
 
 button {
-  padding: 10px;
-  background-color: #4CAF50;
+  padding: var(--space-sm);
+  background-color: var(--color-success);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: var(--color-success-dark);
+}
+
+@media (max-width: 768px) {
+  .view-container {
+    padding: var(--space-md);
+  }
+
+  .profile-container {
+    padding: var(--space-lg);
+  }
+
+  .profile {
+    padding: var(--space-md);
+  }
 }
 </style>

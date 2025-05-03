@@ -212,78 +212,84 @@ const handlePasswordReset = async () => {
 
 <style scoped>
 .view-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: calc(100vh - var(--header-height));
-  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-background-soft);
+  padding: var(--space-lg);
 }
 
-.forgot-password-container {
+.forgot-container {
   width: 100%;
   max-width: 400px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--color-background);
+  padding: var(--space-xl);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .forgot-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-lg);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-xs);
 }
 
 label {
-  color: #2c3e50;
+  color: var(--color-text);
   font-weight: 500;
 }
 
 input {
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
+}
+
+input:focus {
+  border-color: var(--color-primary);
+  outline: none;
 }
 
 .submit-button {
-  background-color: #42b983;
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 1rem;
-  border-radius: 4px;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed);
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #3aa876;
+  background-color: var(--color-primary-hover);
 }
 
 .submit-button:disabled {
-  opacity: 0.7;
+  background-color: var(--color-text-light);
   cursor: not-allowed;
 }
 
 .resend-button {
   background-color: transparent;
-  color: #42b983;
+  color: var(--color-primary);
   border: none;
-  padding: 0.5rem;
+  padding: var(--space-sm);
   font-size: 0.9rem;
   cursor: pointer;
   text-decoration: underline;
 }
 
 .resend-button:hover:not(:disabled) {
-  color: #3aa876;
+  color: var(--color-primary-hover);
 }
 
 .resend-button:disabled {
@@ -292,13 +298,13 @@ input {
 }
 
 .error-message {
-  color: #dc3545;
+  color: var(--color-danger);
   text-align: center;
   font-size: 0.9rem;
 }
 
 .info-message {
-  color: #2c3e50;
+  color: var(--color-text);
   text-align: center;
   font-size: 0.9rem;
   margin: 0;
@@ -306,13 +312,13 @@ input {
 
 .login-link {
   text-align: center;
-  color: #666;
+  color: var(--color-text-light);
   font-size: 0.9rem;
   margin: 0;
 }
 
 .login-link a {
-  color: #42b983;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -323,36 +329,46 @@ input {
 .password-requirements {
   list-style: none;
   padding: 0;
-  margin: 0.5rem 0;
+  margin: var(--space-xs) 0;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--color-text-light);
 }
 
 .password-requirements li {
-  margin: 0.2rem 0;
+  margin: var(--space-xs) 0;
   position: relative;
-  padding-left: 1.5rem;
+  padding-left: var(--space-lg);
 }
 
 .password-requirements li:before {
   content: '✗';
   position: absolute;
   left: 0;
-  color: #dc3545;
+  color: var(--color-danger);
 }
 
 .password-requirements li.met:before {
   content: '✓';
-  color: #28a745;
+  color: var(--color-success);
 }
 
 .password-match {
   font-size: 0.8rem;
-  margin: 0.2rem 0;
-  color: #28a745;
+  margin: var(--space-xs) 0;
+  color: var(--color-success);
 }
 
 .password-match.error {
-  color: #dc3545;
+  color: var(--color-danger);
+}
+
+@media (max-width: 768px) {
+  .view-container {
+    padding: var(--space-md);
+  }
+
+  .forgot-container {
+    padding: var(--space-lg);
+  }
 }
 </style>

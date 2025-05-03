@@ -1,53 +1,61 @@
-/* color palette from <https://github.com/vuejs/theme> */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+  /* Couleurs principales */
+  --color-primary: #f57c00;
+  --color-primary-hover: #ef6c00;
+  --color-secondary: #2ecc71;
+  --color-secondary-hover: #27ae60;
+  
+  /* Couleurs d'état */
+  --color-success: #2ecc71;
+  --color-success-light: #d4edda;
+  --color-success-dark: #155724;
+  --color-warning: #f39c12;
+  --color-danger: #e74c3c;
+  --color-danger-light: #f8d7da;
+  --color-danger-dark: #721c24;
+  
+  /* Couleurs de fond */
+  --color-background: #ffffff;
+  --color-background-soft: #f5f5f5;
+  --color-background-mute: #f8f9fa;
+  
+  /* Couleurs de texte */
+  --color-text: #2c3e50;
+  --color-text-light: #666666;
+  --color-heading: #1a1a1a;
+  
+  /* Bordures et ombres */
+  --color-border: #ddd;
+  --color-border-hover: #c0c0c0;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  /* Espacements */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  
+  /* Bordures arrondies */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+  
+  /* Layout */
+  --header-height: 64px;
+  --max-content-width: 1200px;
+  --transition-speed: 0.3s;
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
-
-  --vt-c-indigo: #2c3e50;
-
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-  --vt-c-text-light-1: #000000;
-  --vt-c-text-light-2: #000000;
-  --vt-c-text-dark-1: #000000;
-  --vt-c-text-dark-2: #000000;
-}
-
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
-
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
-
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-white);
-    --color-background-soft: var(--vt-c-white-soft);
-    --color-background-mute: var(--vt-c-white-mute);
-
-    --color-border: var(--vt-c-divider-light-2);
-    --color-border-hover: var(--vt-c-divider-light-1);
-
-    --color-heading: #000000;
-    --color-text: #000000;
-  }
+  /* Button styles */
+  --button-primary-color: #645bff;
+  --button-secondary-color: #fff;
+  --button-hover-color: #111;
+  --button-arrow-width: 10px;
+  --button-arrow-stroke: 2px;
+  --button-border-radius: 20px;
+  --button-padding: 1em 1.8em;
 }
 
 *,
@@ -61,26 +69,102 @@
 body {
   min-height: 100vh;
   color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
+  background: var(--color-background-soft);
+  transition: color 0.5s, background-color 0.5s;
   line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   font-size: 15px;
-  text-rendering: geometricPrecision;
-  -webkit-font-smoothing: subpixel-antialiased;
-  -moz-osx-font-smoothing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global button styles */
+.btn {
+  --primary-color: var(--button-primary-color);
+  --secondary-color: var(--button-secondary-color);
+  --hover-color: var(--button-hover-color);
+  --arrow-width: var(--button-arrow-width);
+  --arrow-stroke: var(--button-arrow-stroke);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--button-border-radius);
+  color: var(--secondary-color);
+  padding: var(--button-padding);
+  background: var(--primary-color);
+  display: flex;
+  transition: 0.2s background;
+  align-items: center;
+  gap: 0.6em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn .arrow-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn .arrow {
+  margin-top: 1px;
+  width: var(--arrow-width);
+  background: var(--secondary-color);
+  height: var(--arrow-stroke);
+  position: relative;
+  transition: 0.2s;
+}
+
+.btn .arrow::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  border: solid var(--secondary-color);
+  border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
+  display: inline-block;
+  top: -3px;
+  right: 3px;
+  transition: 0.2s;
+  padding: 3px;
+  transform: rotate(-45deg);
+}
+
+.btn:hover {
+  background-color: var(--hover-color);
+}
+
+.btn:hover .arrow {
+  background: var(--secondary-color);
+}
+
+.btn:hover .arrow:before {
+  right: 0;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Button variants */
+.btn-primary {
+  --primary-color: var(--color-primary);
+  --hover-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  --primary-color: var(--color-secondary);
+  --hover-color: var(--color-secondary-hover);
+}
+
+.btn-success {
+  --primary-color: var(--color-success);
+  --hover-color: var(--color-success-dark);
+}
+
+.btn-danger {
+  --primary-color: var(--color-danger);
+  --hover-color: var(--color-danger-dark);
 }

@@ -1,7 +1,6 @@
 <template>
   <div class="view-container">
     <div class="petowner-dashboard">
-      <h1>{{ $t('petowner.dashboard') }}</h1>
       <div class="petowner-container">
         <div class="pet-owner">
           <h1>{{ $t('petowner.space_title') }}</h1>

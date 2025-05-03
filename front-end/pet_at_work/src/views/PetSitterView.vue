@@ -6,6 +6,43 @@
       <p>Loading data...</p>
     </div>
     
+    <!-- Vue pour utilisateur non connecté -->
+    <div v-else-if="!isLoggedIn" class="public-view">
+      <h1>Pet Sitter Services</h1>
+      
+      <div class="login-prompt">
+        <p>Please <router-link to="/login">log in</router-link> or <router-link to="/register">register</router-link> to access all pet sitting services.</p>
+      </div>
+
+      <!-- Section Companies - visible by all -->
+      <div v-if="!error" class="companies-section">
+        <h2>Partner companies</h2>
+        <p class="section-description">Consult our partner companies for specialist services and training.</p>
+        
+        <div v-if="companies.length > 0" class="companies-list-vertical">
+          <div v-for="company in companies" 
+              :key="company.id" 
+              class="company-card-vertical"
+              @click="goToCompanyDetail(company.id)">
+            <div class="company-info">
+              <h3>{{ company.name }}</h3>
+              <p class="capacity">Capacity: {{ company.capacity }} pets</p>
+              <p class="address">{{ company.address }}</p>
+              <div class="company-card-actions">
+                <button class="reservation-btn" @click.stop="promptLogin">
+                  Book a service
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-message">
+          <p>No partner company available at the moment.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Vue pour utilisateur connecté -->
     <div v-else class="pet-sitter-dashboard">
       <h1>Pet Sitter space</h1>
       
@@ -325,37 +362,23 @@ const bookings = ref([]);
 const companies = ref([]);
 const animalCache = ref({});
 const ownerCache = ref({});
-const isUpdating = ref(null); // Pour stocker l'ID de la réservation en cours de mise à jour
+const isUpdating = ref(null);
 const showReservationModal = ref(false);
 const selectedCompanyId = ref(null);
 const selectedCompany = ref(null);
 const isSubmittingReservation = ref(false);
-const currentUser = ref(null); // Utilisateur actuel
+const currentUser = ref(null);
 const showProfileModal = ref(false);
 const isUpdatingProfile = ref(false);
 const linkedBookings = ref([]);
 const companyBookingsMap = ref({});
-const isLoading = ref(true); // État de chargement
-const error = ref(null); // État d'erreur
+const isLoading = ref(true);
+const error = ref(null);
 
-const profileForm = ref({
-  name: '',
-  email: '',
-  address: '',
-  experience: '',
-  capacity: null,
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
+// Check if the user is logged in
+const isLoggedIn = computed(() => {
+  return !!sessionStorage.getItem('user');
 });
-
-const newReservation = ref({
-  service_type: '',
-  start_date: '',
-  end_date: '',
-  details: ''
-});
-
 
 // État pour la réservation d'entreprise pour un animal spécifique
 const selectedBooking = ref(null);
@@ -376,19 +399,27 @@ const pendingBookings = computed(() => {
   return bookings.value.filter(booking => booking.status === 'pending');
 });
 
-
-// Fonction pour charger les données
+// Fonction pour charger les données - modifiée pour vérifier le statut de connexion
 const loadData = async () => {
   isLoading.value = true;
-  error.value = null; // Réinitialiser l'erreur
+  error.value = null;
+  
   try {
-    // Récupérer l'ID de l'utilisateur connecté depuis le sessionStorage (et non localStorage)
+    // Charger les compagnies pour tous les utilisateurs (authentifiés ou non)
+    companies.value = await apiService.getAvailableCompanies();
+    
+    // Si l'utilisateur n'est pas connecté, charger uniquement les compagnies
+    if (!isLoggedIn.value) {
+      isLoading.value = false;
+      return;
+    }
+    
+    // Charger des données supplémentaires pour les utilisateurs authentifiés
     const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
     const currentUserId = userData.user_id;
     
     if (!currentUserId) {
-      console.error('Utilisateur non connecté');
-      router.push('/login');
+      console.error('User ID not found');
       return;
     }
     
@@ -400,9 +431,6 @@ const loadData = async () => {
     const allBookings = await apiService.getAllBookings();
     bookings.value = allBookings.filter(booking => booking.sitter === currentUserId);
     console.log('Réservations chargées:', bookings.value);
-    
-    // Récupérer UNIQUEMENT les compagnies disponibles (non complètes)
-    companies.value = await apiService.getAvailableCompanies();
     
     // Récupérer les informations des animaux pour l'affichage
     const animalIds = [...new Set(bookings.value.map(booking => booking.animal))];
@@ -466,16 +494,20 @@ const loadData = async () => {
       console.error('Erreur lors du chargement des réservations compagnies:', error);
     }
   } catch (err) {
-    error.value = 'Une erreur est survenue lors du chargement des données. Veuillez réessayer.'; // Gérer l'erreur
+    error.value = 'Une erreur est survenue lors du chargement des données. Veuillez réessayer.';
     console.error('Erreur lors du chargement des données:', err);
   } finally {
     isLoading.value = false;
   }
 };
 
+// Fonction pour rediriger vers la connexion lorsqu'un utilisateur non authentifié tente de faire une réservation
+const promptLogin = () => {
+  router.push('/login?redirect=' + router.currentRoute.value.path);
+};
+
 // Fonction pour ouvrir la modal de modification de profil
 const openProfileModal = () => {
-  // Initialiser le formulaire avec les données de l'utilisateur actuel
   profileForm.value = {
     name: currentUser.value.name || '',
     email: currentUser.value.email || '',
@@ -496,13 +528,11 @@ const updateBookingStatus = async (bookingId, newStatus) => {
     isUpdating.value = bookingId;
     await apiService.updateBookingStatus(bookingId, newStatus);
     
-    // Mettre à jour le statut dans la liste locale
     const bookingIndex = bookings.value.findIndex(b => b.id === bookingId);
     if (bookingIndex !== -1) {
       bookings.value[bookingIndex].status = newStatus;
     }
     
-    // Afficher un message de confirmation
     alert(`La réservation a été ${getStatusLabel(newStatus).toLowerCase()} avec succès !`);
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut de la réservation:', error);
@@ -517,7 +547,6 @@ const startNewReservation = (companyId) => {
   selectedCompanyId.value = companyId;
   selectedCompany.value = companies.value.find(c => c.id === companyId);
   
-  // Initialiser les dates par défaut (aujourd'hui et demain)
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
@@ -537,7 +566,6 @@ const createCompanyReservation = async () => {
   try {
     isSubmittingReservation.value = true;
     
-    // Valider les dates
     const startDate = new Date(newReservation.value.start_date);
     const endDate = new Date(newReservation.value.end_date);
     
@@ -547,7 +575,6 @@ const createCompanyReservation = async () => {
       return;
     }
     
-    // Créer la réservation
     await apiService.createPetSitterCompanyBooking({
       company: selectedCompanyId.value,
       service_type: newReservation.value.service_type,
@@ -556,7 +583,6 @@ const createCompanyReservation = async () => {
       details: newReservation.value.details
     });
     
-    // Fermer la modal et afficher un message de confirmation
     closeModal();
     alert('Votre réservation a été envoyée avec succès !');
   } catch (error) {
@@ -571,15 +597,13 @@ const createCompanyReservation = async () => {
 const bookCompanyForAnimal = (booking) => {
   selectedBooking.value = booking;
   
-  // Préremplir le formulaire avec les dates de la réservation existante
   companyReservationForm.value = {
-    service_type: 'collaboration', // Par défaut
+    service_type: 'collaboration',
     start_date: booking.start_date,
     end_date: booking.end_date,
     details: `Réservation liée à la garde de l'animal ${getAnimalName(booking.animal)}`
   };
   
-  // Afficher la modal
   showCompanyReservationModal.value = true;
 };
 
@@ -593,7 +617,6 @@ const submitCompanyReservation = async () => {
     
     isReserving.value = true;
     
-    // Créer la réservation
     await apiService.createPetSitterCompanyBooking({
       company: selectedCompanyId.value,
       pet_sitter: currentUser.value.id,
@@ -605,11 +628,9 @@ const submitCompanyReservation = async () => {
       linked_booking: selectedBooking.value.id
     });
     
-    // Fermer la modal et afficher un message de confirmation
     cancelCompanyReservation();
     alert('Votre réservation a été envoyée à l\'entreprise avec succès !');
     
-    // Recharger les données
     await loadData();
   } catch (error) {
     console.error('Erreur lors de la création de la réservation:', error);
@@ -637,10 +658,6 @@ const updateUserProfile = async () => {
   try {
     isUpdatingProfile.value = true;
     
-    // Valider les mots de passe
-    isUpdatingProfile.value = true;
-    
-    // Valider les mots de passe uniquement si un nouveau mot de passe est fourni
     if (profileForm.value.newPassword) {
       if (profileForm.value.newPassword !== profileForm.value.confirmPassword) {
         alert('Les nouveaux mots de passe ne correspondent pas.');
@@ -648,7 +665,6 @@ const updateUserProfile = async () => {
         return;
       }
       
-      // Vérifier que le mot de passe actuel est bien renseigné
       if (!profileForm.value.currentPassword) {
         alert('Veuillez entrer votre mot de passe actuel pour confirmer le changement.');
         isUpdatingProfile.value = false;
@@ -656,7 +672,6 @@ const updateUserProfile = async () => {
       }
     }
     
-    // Préparer les données à mettre à jour
     const updateData = {
       name: profileForm.value.name,
       email: profileForm.value.email,
@@ -665,16 +680,13 @@ const updateUserProfile = async () => {
       capacity: profileForm.value.capacity || null
     };
     
-    // Ajouter les informations de mot de passe uniquement si un nouveau mot de passe est fourni
     if (profileForm.value.newPassword && profileForm.value.currentPassword) {
       updateData.current_password = profileForm.value.currentPassword;
       updateData.new_password = profileForm.value.newPassword;
     }
     
-    // Mettre à jour le profil
     await apiService.updateUserProfile(currentUser.value.id, updateData);
     
-    // Mettre à jour les informations locales sans écraser le mot de passe
     currentUser.value = { 
       ...currentUser.value, 
       name: profileForm.value.name,
@@ -684,7 +696,6 @@ const updateUserProfile = async () => {
       capacity: profileForm.value.capacity
     };
     
-    // Fermer la modal et afficher un message de confirmation
     showProfileModal.value = false;
     alert('Votre profil a été mis à jour avec succès !');
   } catch (error) {
@@ -823,6 +834,34 @@ onMounted(async () => {
   border-radius: var(--border-radius-md);
   margin: var(--space-xl) 0;
   color: var(--color-text-light);
+}
+
+/* Styles for public view */
+.public-view {
+  width: 100%;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+.login-prompt {
+  background-color: var(--color-background-soft);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  text-align: center;
+}
+
+.login-prompt a {
+  color: var(--color-primary);
+  font-weight: bold;
+  text-decoration: none;
+  transition: color var(--transition-speed);
+}
+
+.login-prompt a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
 }
 
 @media (max-width: 768px) {

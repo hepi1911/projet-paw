@@ -40,72 +40,176 @@
 
           <!-- Section Mes Animaux - Visible uniquement pour les utilisateurs connectés -->
           <div class="animals-section" v-if="isLoggedIn && viewMode === 'owner'">
-            <h2>{{ $t('animals.my_animals') }}</h2>
+            <h2 class="section-title">{{ $t('animals.my_animals') }}</h2>
             
-            <!-- Formulaire d'ajout d'animal -->
-            <div class="add-animal-card">
-              <h3>{{ $t('animals.add_animal') }}</h3>
-              <form @submit.prevent="addAnimal" class="add-animal-form">
-                <div class="form-group">
-                  <label for="animal-name">{{ $t('animals.name') }}</label>
-                  <input 
-                    id="animal-name" 
-                    v-model="newAnimal.name" 
-                    type="text" 
-                    required 
-                    :placeholder="$t('petowner.animal_name_placeholder')">
-                </div>
-                
-                <div class="form-group">
-                  <label for="animal-breed">{{ $t('animals.breed') }}</label>
-                  <input 
-                    id="animal-breed" 
-                    v-model="newAnimal.breed" 
-                    type="text" 
-                    required
-                    :placeholder="$t('petowner.animal_breed_placeholder')">
-                </div>
-                
-                <div class="form-group">
-                  <label for="animal-age">{{ $t('animals.age') }}</label>
-                  <input 
-                    id="animal-age" 
-                    v-model="newAnimal.age" 
-                    type="text" 
-                    required
-                    :placeholder="$t('petowner.animal_age_placeholder')">
-                </div>
-                
-                <div class="form-group">
-                  <label for="animal-maladie">{{ $t('petowner.medical_conditions') }}</label>
-                  <textarea 
-                    id="animal-maladie" 
-                    v-model="newAnimal.maladie" 
-                    :placeholder="$t('petowner.medical_conditions_placeholder')"></textarea>
-                </div>
-                
-                <button type="submit" class="add-animal-btn" :disabled="isSubmitting">
-                  {{ isSubmitting ? $t('petowner.adding_animal') : $t('petowner.add_animal_btn') }}
+            <!-- Panneau avec onglets pour ajouter/voir les animaux -->
+            <div class="animal-panel">
+              <div class="panel-tabs">
+                <button 
+                  :class="['tab-btn', { active: activeTab === 'list' }]" 
+                  @click="activeTab = 'list'"
+                >
+                  <i class="tab-icon">🐾</i> Mes animaux
                 </button>
-              </form>
-            </div>
-            
-            <!-- Liste des animaux de l'utilisateur -->
-            <div class="animals-list" v-if="userAnimals.length > 0">
-              <div v-for="animal in userAnimals" :key="animal.id" class="animal-card">
-                <div class="animal-info">
-                  <h3>{{ animal.name }}</h3>
-                  <p><strong>{{ $t('animals.breed') }}:</strong> {{ animal.breed }}</p>
-                  <p><strong>{{ $t('animals.age') }}:</strong> {{ animal.age }}</p>
-                  <p v-if="animal.maladie"><strong>{{ $t('petowner.medical_conditions') }}:</strong> {{ animal.maladie }}</p>
-                  <p v-else><strong>{{ $t('petowner.medical_conditions') }}:</strong> {{ $t('animals.no_disease') }}</p>
+                <button 
+                  :class="['tab-btn', { active: activeTab === 'add' }]" 
+                  @click="activeTab = 'add'"
+                >
+                  <i class="tab-icon">➕</i> Ajouter un animal
+                </button>
+              </div>
+              
+              <div class="panel-content">
+                <!-- Onglet d'ajout d'animal -->
+                <div v-if="activeTab === 'add'" class="add-animal-content">
+                  <h3 class="content-title">
+                    <span class="pet-emoji">🐶</span>
+                    {{ $t('animals.add_animal') }}
+                  </h3>
+                  
+                  <form @submit.prevent="addAnimal" class="add-animal-form">
+                    <div class="form-step active">
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label for="animal-name">{{ $t('animals.name') }}</label>
+                          <div class="input-container">
+                            <i class="input-icon">🏷️</i>
+                            <input 
+                              id="animal-name" 
+                              v-model="newAnimal.name" 
+                              type="text" 
+                              required 
+                              :placeholder="$t('petowner.animal_name_placeholder')">
+                          </div>
+                        </div>
+                        
+                        <div class="form-group">
+                          <label for="animal-breed">{{ $t('animals.breed') }}</label>
+                          <div class="input-container">
+                            <i class="input-icon">🧬</i>
+                            <input 
+                              id="animal-breed" 
+                              v-model="newAnimal.breed" 
+                              type="text" 
+                              required
+                              :placeholder="$t('petowner.animal_breed_placeholder')">
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label for="animal-age">{{ $t('animals.age') }}</label>
+                          <div class="input-container">
+                            <i class="input-icon">🗓️</i>
+                            <input 
+                              id="animal-age" 
+                              v-model="newAnimal.age" 
+                              type="text" 
+                              required
+                              :placeholder="$t('petowner.animal_age_placeholder')">
+                          </div>
+                        </div>
+                        
+                        <div class="form-group animal-type">
+                          <label>Type</label>
+                          <div class="animal-type-selector">
+                            <div 
+                              :class="['type-option', { selected: selectedAnimalType === 'dog' }]"
+                              @click="selectedAnimalType = 'dog'"
+                            >
+                              <span class="type-emoji">🐕</span>
+                              <span class="type-label">Chien</span>
+                            </div>
+                            <div 
+                              :class="['type-option', { selected: selectedAnimalType === 'cat' }]"
+                              @click="selectedAnimalType = 'cat'"
+                            >
+                              <span class="type-emoji">🐈</span>
+                              <span class="type-label">Chat</span>
+                            </div>
+                            <div 
+                              :class="['type-option', { selected: selectedAnimalType === 'other' }]"
+                              @click="selectedAnimalType = 'other'"
+                            >
+                              <span class="type-emoji">🐾</span>
+                              <span class="type-label">Autre</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="form-group wide">
+                        <label for="animal-maladie">{{ $t('petowner.medical_conditions') }}</label>
+                        <div class="input-container textarea-container">
+                          <i class="input-icon">🏥</i>
+                          <textarea 
+                            id="animal-maladie" 
+                            v-model="newAnimal.maladie" 
+                            :placeholder="$t('petowner.medical_conditions_placeholder')"></textarea>
+                        </div>
+                      </div>
+                      
+                      <div class="form-actions">
+                        <button type="submit" class="add-animal-btn" :disabled="isSubmitting">
+                          <span v-if="isSubmitting" class="spinner"></span>
+                          <span v-else class="btn-text">
+                            <i class="btn-icon">🐾</i>
+                            {{ isSubmitting ? $t('petowner.adding_animal') : $t('petowner.add_animal_btn') }}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+                
+                <!-- Onglet liste des animaux -->
+                <div v-else class="animals-list-content">
+                  <div v-if="userAnimals.length > 0" class="animals-grid">
+                    <div 
+                      v-for="animal in userAnimals" 
+                      :key="animal.id" 
+                      class="animal-card"
+                    >
+                      <div class="animal-avatar">
+                        <div class="avatar-image">
+                          {{ getAnimalEmoji(animal.breed) }}
+                        </div>
+                      </div>
+                      
+                      <div class="animal-content">
+                        <h3 class="animal-name">{{ animal.name }}</h3>
+                        <div class="animal-details">
+                          <p class="detail"><i class="detail-icon">🧬</i> {{ animal.breed }}</p>
+                          <p class="detail"><i class="detail-icon">🗓️</i> {{ animal.age }} {{ animal.age == 1 ? 'an' : 'ans' }}</p>
+                          <div class="detail medical" v-if="animal.maladie">
+                            <i class="detail-icon">🏥</i>
+                            <div class="detail-content">
+                              <strong>{{ $t('petowner.medical_conditions') }}:</strong>
+                              <p>{{ animal.maladie }}</p>
+                            </div>
+                          </div>
+                          <div class="detail medical" v-else>
+                            <i class="detail-icon">💪</i>
+                            <div class="detail-content">
+                              <strong>{{ $t('petowner.medical_conditions') }}:</strong>
+                              <p>{{ $t('animals.no_disease') }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div v-else class="no-animals">
+                    <div class="no-animals-illustration">🐾</div>
+                    <p class="no-animals-text">{{ $t('animals.no_animals') }}</p>
+                    <button @click="activeTab = 'add'" class="add-first-animal-btn">
+                      <i class="btn-icon">➕</i> Ajouter votre premier animal
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- Message si aucun animal -->
-            <div v-else class="no-animals-message">
-              {{ $t('animals.no_animals') }}
             </div>
           </div>
 
@@ -168,18 +272,71 @@
           <!-- Section Pet Sitters - Visible pour tous les utilisateurs -->
           <div class="pet-sitters-section">
             <h2>{{ $t('petowner.available_petsitters') }}</h2>
-            <div class="sitters-list">
-              <div v-for="sitter in petSitters" 
-                   :key="sitter.id" 
-                   class="sitter-card"
-                   @click="handleSitterClick(sitter.id)">
-                <div class="sitter-info">
-                  <h3>{{ sitter.name }}</h3>
-                  <p class="experience">{{ truncateExperience(sitter.experience) }}</p>
-                  <p class="contact">{{ $t('petowner.contact') }}: {{ sitter.email }}</p>
+            
+            <!-- Barre de recherche -->
+            <div class="search-filter-container">
+              <div class="search-box">
+                <i class="search-icon">🔍</i>
+                <input 
+                  type="text" 
+                  v-model="searchQuery" 
+                  placeholder="Rechercher un pet sitter..." 
+                  class="search-input"
+                />
+              </div>
+            </div>
+            
+            <!-- Message si aucun pet sitter trouvé -->
+            <div v-if="filteredPetSitters.length === 0" class="no-results">
+              <p>Aucun pet sitter ne correspond à votre recherche</p>
+            </div>
+            
+            <!-- Grille de pet sitters -->
+            <div class="sitters-grid">
+              <div 
+                v-for="sitter in filteredPetSitters" 
+                :key="sitter.id" 
+                class="sitter-card"
+                @click="handleSitterClick(sitter.id)"
+              >
+                <div class="sitter-avatar">
+                  <div class="avatar-placeholder">
+                    {{ getInitials(sitter.name) }}
+                  </div>
                 </div>
+                
+                <div class="sitter-content">
+                  <h3 class="sitter-name">{{ sitter.name }}</h3>
+                  
+                  <div class="sitter-rating">
+                    <div class="stars">
+                      <span class="star filled">★</span>
+                      <span class="star filled">★</span>
+                      <span class="star filled">★</span>
+                      <span class="star filled">★</span>
+                      <span class="star">☆</span>
+                    </div>
+                    <span class="rating-score">4.0</span>
+                  </div>
+                  
+                  <p class="experience-preview">{{ truncateExperience(sitter.experience) }}</p>
+                  
+                  <div class="sitter-tags">
+                    <span class="tag">Chiens</span>
+                    <span class="tag">Chats</span>
+                    <span class="tag">À domicile</span>
+                  </div>
+                  
+                  <div class="sitter-contact">
+                    <span class="contact-label">{{ $t('petowner.contact') }}:</span>
+                    <span class="contact-value">{{ sitter.email }}</span>
+                  </div>
+                </div>
+                
                 <div class="card-footer">
-                  <span class="view-more">{{ $t('petowner.view_more') }} →</span>
+                  <button class="view-details-btn">
+                    {{ $t('petowner.view_more') }} →
+                  </button>
                 </div>
               </div>
             </div>
@@ -220,6 +377,9 @@ const newAnimal = ref({
   maladie: ''
 });
 const isDeleting = ref(null);
+const searchQuery = ref('');
+const activeTab = ref('list');
+const selectedAnimalType = ref(null);
 
 // Calculer si l'utilisateur est connecté
 const isLoggedIn = computed(() => {
@@ -491,6 +651,27 @@ const userHasRole = (role) => {
   const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
   return userData.role === role;
 };
+
+const filteredPetSitters = computed(() => {
+  if (!searchQuery.value) return petSitters.value;
+  return petSitters.value.filter(sitter => 
+    sitter.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
+const getInitials = (name) => {
+  if (!name) return '';
+  const parts = name.split(' ');
+  return parts.map(part => part[0]).join('').toUpperCase();
+};
+
+const getAnimalEmoji = (breed) => {
+  if (!breed) return '🐾';
+  const breedLower = breed.toLowerCase();
+  if (breedLower.includes('dog') || breedLower.includes('chien')) return '🐕';
+  if (breedLower.includes('cat') || breedLower.includes('chat')) return '🐈';
+  return '🐾';
+};
 </script>
 
 <style scoped>
@@ -689,6 +870,471 @@ const userHasRole = (role) => {
   color: var(--color-text-light);
 }
 
+.pet-sitters-section {
+  margin-bottom: var(--space-xl);
+}
+
+.search-filter-container {
+  margin-bottom: var(--space-lg);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-sm) var(--space-md);
+  box-shadow: var(--shadow-md);
+}
+
+.search-icon {
+  margin-right: var(--space-sm);
+  color: var(--color-text-light);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.sitters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-lg);
+}
+
+.sitter-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+  cursor: pointer;
+}
+
+.sitter-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.sitter-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.avatar-placeholder {
+  width: 50px;
+  height: 50px;
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: var(--font-size-lg);
+}
+
+.sitter-content {
+  text-align: center;
+}
+
+.sitter-name {
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  margin-bottom: var(--space-sm);
+}
+
+.sitter-rating {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.stars {
+  display: flex;
+}
+
+.star {
+  font-size: var(--font-size-md);
+  color: var(--color-warning);
+}
+
+.star.filled {
+  color: var(--color-warning);
+}
+
+.rating-score {
+  margin-left: var(--space-sm);
+  font-weight: bold;
+}
+
+.experience-preview {
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-light);
+}
+
+.sitter-tags {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.tag {
+  background-color: var(--color-background-mute);
+  color: var(--color-text-light);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.sitter-contact {
+  margin-bottom: var(--space-md);
+}
+
+.contact-label {
+  font-weight: bold;
+}
+
+.contact-value {
+  color: var(--color-primary);
+}
+
+.card-footer {
+  text-align: center;
+}
+
+.view-details-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+}
+
+.view-details-btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.no-results {
+  text-align: center;
+  padding: var(--space-lg);
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-md);
+  margin: var(--space-lg) 0;
+  color: var(--color-text-light);
+}
+
+.animals-section .animal-panel {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+}
+
+.panel-tabs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.tab-btn {
+  background-color: var(--color-background-mute);
+  color: var(--color-text-light);
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+}
+
+.tab-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.tab-btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.panel-content {
+  margin-top: var(--space-md);
+}
+
+.add-animal-content .form-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.form-group {
+  flex: 1;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-sm);
+}
+
+.input-icon {
+  margin-right: var(--space-sm);
+  color: var(--color-text-light);
+}
+
+.textarea-container {
+  align-items: flex-start;
+}
+
+.add-animal-btn {
+  background-color: var(--color-success);
+  color: white;
+  border: none;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+  width: 100%;
+}
+
+.add-animal-btn:hover {
+  background-color: var(--color-success-dark);
+}
+
+.animals-list-content .animals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-lg);
+}
+
+.animal-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.animal-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.animal-avatar .avatar-image {
+  font-size: var(--font-size-xl);
+  text-align: center;
+}
+
+.animal-content .animal-name {
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  margin-bottom: var(--space-sm);
+}
+
+.animal-details .detail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.detail-icon {
+  color: var(--color-text-light);
+}
+
+.no-animals {
+  text-align: center;
+  padding: var(--space-lg);
+  background-color: var(--color-background-mute);
+  border-radius: var(--border-radius-md);
+  margin: var(--space-lg) 0;
+  color: var(--color-text-light);
+}
+
+.no-animals-illustration {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-md);
+}
+
+.add-first-animal-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+}
+
+.add-first-animal-btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.animal-type-selector {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: 0.5rem;
+}
+
+.type-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-background-mute);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.type-option.selected {
+  background-color: var(--color-primary-light, #e0f2fe);
+  border: 2px solid var(--color-primary, #3490dc);
+  transform: translateY(-2px);
+}
+
+.type-emoji {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.type-label {
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.form-group input, .form-group textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0.5rem;
+  outline: none;
+  color: var(--color-text);
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-group.wide {
+  grid-column: span 2;
+}
+
+.form-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-heading);
+  position: relative;
+  display: inline-block;
+}
+
+.section-title:after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 50%;
+  height: 4px;
+  background-color: var(--color-primary);
+  border-radius: 2px;
+}
+
+.content-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.pet-emoji {
+  font-size: 1.5rem;
+}
+
+.animal-details {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail.medical {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-content p {
+  color: var(--color-text-light);
+  font-size: 0.875rem;
+}
+
 @media (max-width: 768px) {
   .petowner-dashboard {
     padding: var(--space-md);
@@ -700,7 +1346,7 @@ const userHasRole = (role) => {
     text-align: center;
   }
   
-  .pets-grid {
+  .pets-grid, .sitters-grid, .animals-list-content .animals-grid {
     grid-template-columns: 1fr;
   }
   

@@ -5,12 +5,20 @@
         <h1>{{ company.name }}</h1>
         <div class="info-section">
           <p><strong>Address:</strong> {{ company.address }}</p>
-          <p><strong>Capacity:</strong> {{ company.capacity }} animaux</p>
+          <p><strong>Capacity:</strong> {{ company.capacity }} pets</p>
           <p><strong>Contact:</strong> {{ company.email }}</p>
         </div>
         
-        <!-- Reservation Section -->
-        <div class="reservation-section">
+        <!-- Reservation Section - Only show login prompt for non-authenticated users -->
+        <div v-if="!isLoggedIn" class="login-prompt-section">
+          <h2>Book a place for your pet</h2>
+          <div class="login-prompt">
+            <p>Please <router-link to="/login?redirect=/company/{{company.id}}">log in</router-link> or <router-link to="/register">register</router-link> to book services with this company.</p>
+          </div>
+        </div>
+        
+        <!-- Reservation Section - For authenticated users -->
+        <div v-else class="reservation-section">
           <h2>Book a place for your pet</h2>
           
           <div v-if="userAnimals.length === 0" class="no-animals">
@@ -24,7 +32,7 @@
               <select id="animal" v-model="reservation.animalId" required>
                 <option value="" disabled>Choose a pet</option>
                 <option v-for="animal in userAnimals" :key="animal.id" :value="animal.id">
-                  {{ animal.name }} ({{ animal.species }})
+                  {{ animal.name }} ({{ animal.species || animal.breed }})
                 </option>
               </select>
             </div>
@@ -81,6 +89,11 @@ const reservation = ref({
   notes: ''
 });
 
+// Check if the user is logged in
+const isLoggedIn = computed(() => {
+  return !!sessionStorage.getItem('user');
+});
+
 const today = computed(() => {
   const date = new Date();
   return date.toISOString().split('T')[0];
@@ -88,25 +101,19 @@ const today = computed(() => {
 
 onMounted(async () => {
   try {
-    // Récupérer l'ID de l'utilisateur connecté depuis le localStorage
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const currentUserId = userData.user_id;
-    
-    if (!currentUserId) {
-      console.error('User not logged in or ID not available');
-      router.push('/login');
-      return;
-    }
-    
-    // Récupérer les détails de l'entreprise
+    // Load company details for all users
     company.value = await apiService.getUserById(route.params.id);
     
-    // Récupérer UNIQUEMENT les animaux appartenant au propriétaire connecté
-    userAnimals.value = await apiService.getAnimalsByOwner(currentUserId);
-    console.log('Pets of the user:', userAnimals.value);
-    
-    if (userAnimals.value.length === 0) {
-      console.log('The user does not yet have a registered pet');
+    // If user is logged in, load their animals
+    if (isLoggedIn.value) {
+      const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const currentUserId = userData.user_id;
+      
+      if (currentUserId) {
+        // Get animals belonging to the logged-in pet owner
+        userAnimals.value = await apiService.getAnimalsByOwner(currentUserId);
+        console.log('User animals loaded:', userAnimals.value);
+      }
     }
   } catch (error) {
     console.error('Error during data loading:', error);
@@ -114,34 +121,41 @@ onMounted(async () => {
 });
 
 const submitReservation = async () => {
+  // Verify the user is logged in before submission
+  if (!isLoggedIn.value) {
+    router.push('/login?redirect=' + router.currentRoute.value.path);
+    return;
+  }
+  
   isSubmitting.value = true;
   reservationMessage.value = '';
   
   try {
-    // Vérifier que l'utilisateur est bien connecté
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    // Verify user is logged in
+    const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
     if (!userData.user_id) {
       reservationMessage.value = 'You must be logged in to make a booking.';
       reservationStatus.value = 'error';
-      router.push('/login');
+      router.push('/login?redirect=' + router.currentRoute.value.path);
       return;
     }
     
-    // Créer l'objet de données pour la réservation
+    // Create reservation data object
     const bookingData = {
       company: company.value.id,
       animal: reservation.value.animalId,
       start_date: reservation.value.startDate,
-      end_date: reservation.value.endDate
+      end_date: reservation.value.endDate,
+      notes: reservation.value.notes
     };
     
-    // Utiliser apiService au lieu d'appeler directement l'API
+    // Use apiService to create the booking
     await apiService.createBooking(bookingData);
     
     reservationMessage.value = 'Successful booking! You will receive confirmation by email.';
     reservationStatus.value = 'success';
     
-    // Réinitialiser le formulaire
+    // Reset the form
     reservation.value = {
       animalId: '',
       startDate: '',
@@ -149,7 +163,7 @@ const submitReservation = async () => {
       notes: ''
     };
     
-    // Rediriger vers la page du pet owner après un court délai
+    // Redirect to the pet owner page after a short delay
     setTimeout(() => {
       router.push('/petowner');
     }, 2000);
@@ -176,7 +190,7 @@ const submitReservation = async () => {
   margin: 0 auto;
 }
 
-.detail-container {
+.detail-card {
   background-color: var(--color-background);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-md);
@@ -299,12 +313,41 @@ input:focus, select:focus, textarea:focus {
   color: var(--color-text-light);
 }
 
+.login-prompt-section {
+  margin-top: var(--space-xl);
+}
+
+.login-prompt-section h2 {
+  margin-bottom: var(--space-lg);
+  font-size: 1.5rem;
+  color: var(--color-heading);
+}
+
+.login-prompt {
+  background-color: var(--color-background-soft);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+.login-prompt a {
+  color: var(--color-primary);
+  font-weight: bold;
+  text-decoration: none;
+  transition: color var(--transition-speed);
+}
+
+.login-prompt a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .view-container {
     padding: var(--space-md);
   }
 
-  .detail-container {
+  .detail-card {
     padding: var(--space-lg);
   }
 }

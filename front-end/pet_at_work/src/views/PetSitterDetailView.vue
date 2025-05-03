@@ -152,7 +152,7 @@
                 </div>
                 
                 <button @click="processPayment" class="payment-btn" :disabled="isProcessingPayment">
-                  {{ isProcessingPayment ? 'Traitement en cours...' : 'Payer ' + totalPrice + '€' }}
+                  {{ isProcessingPayment ? 'Traitement en cours...' : 'Payer ' + totalPrice + '£' }}
                 </button>
               </div>
             </div>
@@ -229,510 +229,533 @@ const booking = reactive({
   notes: ''
 });
 
-// Vérifier si l'utilisateur est connecté
+// Check if user is logged in
 const isLoggedIn = computed(() => {
   return !!sessionStorage.getItem('user');
 });
 
-// Vérifier le rôle de l'utilisateur
+// Get user role
 const userRole = computed(() => {
-  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-  return user.role || '';
+  if (!isLoggedIn.value) return null;
+  const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
+  return userData.role;
 });
 
+// Check if user has a specific role
 const userHasRole = (role) => {
+  if (!isLoggedIn.value) return false;
   return userRole.value === role;
 };
 
-// Rediriger vers la page de connexion avec le retour à cette page
-const goToLogin = () => {
-  router.push({ 
-    name: 'Login',
-    query: { redirect: `/petsitter/${route.params.id}` }
-  });
-};
-
-// Rediriger vers la page d'inscription avec le retour à cette page
-const goToRegister = () => {
-  router.push({ 
-    name: 'Register',
-    query: { redirect: `/petsitter/${route.params.id}` }
-  });
-};
-
-// Calculer le prix total en fonction des dates sélectionnées
+// Calculate price when dates change
 const calculatePrice = () => {
-  if (booking.startDate && booking.endDate) {
-    const start = new Date(booking.startDate);
-    const end = new Date(booking.endDate);
-    
-    // Vérifier que les dates sont valides
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      totalDays.value = 0;
-      totalPrice.value = 0;
-      return;
-    }
-    
-    // Calculer le nombre de jours (en incluant le jour de début et de fin)
-    const timeDiff = end.getTime() - start.getTime();
-    totalDays.value = Math.round(timeDiff / (1000 * 3600 * 24)) + 1;
-    
-    // Si les dates sont inversées, réinitialiser
-    if (totalDays.value < 1) {
-      totalDays.value = 0;
-      totalPrice.value = 0;
-      return;
-    }
-    
-    // Calculer le prix total (10€ par jour)
-    totalPrice.value = totalDays.value * 10;
-  } else {
+  if (!booking.startDate || !booking.endDate) {
     totalDays.value = 0;
     totalPrice.value = 0;
+    return;
+  }
+  
+  const start = new Date(booking.startDate);
+  const end = new Date(booking.endDate);
+  
+  if (end < start) {
+    bookingError.value = 'End date must be after start date';
+    totalDays.value = 0;
+    totalPrice.value = 0;
+    return;
+  }
+  
+  bookingError.value = null;
+  // Calculate the difference in days
+  const diffTime = Math.abs(end - start);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Including the end day
+  
+  totalDays.value = diffDays;
+  // Fixed price of 10£ per day
+  totalPrice.value = diffDays * 10;
+};
+
+// Submit the booking
+const submitBooking = async () => {
+  if (!isLoggedIn.value) {
+    goToLogin();
+    return;
+  }
+  
+  try {
+    if (!booking.animalId || !booking.startDate || !booking.endDate) {
+      bookingError.value = 'Please fill in all required fields';
+      return;
+    }
+    
+    const bookingData = {
+      sitter: sitter.value.id,
+      animal: booking.animalId,
+      start_date: booking.startDate,
+      end_date: booking.endDate,
+      notes: booking.notes,
+      status: 'pending',
+      price: totalPrice.value
+    };
+    
+    const response = await apiService.createBooking(bookingData);
+    
+    bookingSuccess.value = true;
+    createdBookingId.value = response.id;
+    bookingError.value = null;
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    bookingError.value = 'Failed to create booking. Please try again.';
   }
 };
 
-// Surveiller les changements de dates pour mettre à jour le prix
-watch(() => [booking.startDate, booking.endDate], () => {
-  calculatePrice();
-});
-
-// Traiter le paiement
+// Process the payment
 const processPayment = async () => {
+  if (!createdBookingId.value) {
+    paymentError.value = 'No booking to pay for';
+    return;
+  }
+  
+  isProcessingPayment.value = true;
+  
   try {
-    isProcessingPayment.value = true;
+    const paymentData = {
+      booking_id: createdBookingId.value,
+      amount: totalPrice.value,
+      payment_method: paymentMethod.value,
+      card_details: paymentMethod.value === 'card' ? {
+        card_number: paymentDetails.cardNumber,
+        expiry_date: paymentDetails.expiryDate,
+        cvv: paymentDetails.cvv,
+        card_name: paymentDetails.cardName
+      } : null
+    };
+    
+    await apiService.processPayment(paymentData);
+    
+    paymentSuccess.value = true;
     paymentError.value = null;
     
-    // Validation simple pour le formulaire de carte
-    if (paymentMethod.value === 'card') {
-      if (!paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv || !paymentDetails.cardName) {
-        paymentError.value = "Veuillez remplir tous les champs de la carte bancaire";
-        isProcessingPayment.value = false;
-        return;
-      }
-    }
-    
-    // Appeler l'API de paiement
-    try {
-      await apiService.processPayment({
-        booking: createdBookingId.value,
-        payment_type: paymentMethod.value
-      });
-      
-      // Paiement réussi
-      paymentSuccess.value = true;
-      
-      // Rediriger vers la page du pet owner après un court délai
-      setTimeout(() => {
-        router.push('/petowner');
-      }, 3000);
-    } catch (paymentError) {
-      console.warn('Erreur lors du paiement, mais vérifions si le paiement a été traité:', paymentError);
-      
-      // Vérifier si la réservation est passée à l'état "paid" malgré l'erreur
-      try {
-        // Attendre un court instant
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Vérifier l'état de la réservation
-        const booking = await apiService.getBookingById(createdBookingId.value);
-        
-        if (booking && booking.status === 'paid') {
-          console.log('Paiement réussi malgré l\'erreur, la réservation est passée à "paid"');
-          paymentSuccess.value = true;
-          
-          // Rediriger vers la page du pet owner après un court délai
-          setTimeout(() => {
-            router.push('/petowner');
-          }, 3000);
-          return;
-        }
-        
-        // Essayer une mise à jour manuelle du statut
-        try {
-          await apiService.updateBookingStatus(createdBookingId.value, 'paid');
-          console.log('Statut de réservation mis à jour manuellement à "paid"');
-          paymentSuccess.value = true;
-          
-          // Rediriger vers la page du pet owner après un court délai
-          setTimeout(() => {
-            router.push('/petowner');
-          }, 3000);
-          return;
-        } catch (updateError) {
-          console.error('Échec de la mise à jour manuelle du statut:', updateError);
-          throw paymentError; // Relancer l'erreur originale
-        }
-      } catch (checkError) {
-        console.error('Erreur lors de la vérification de l\'état du paiement:', checkError);
-        throw paymentError; // Relancer l'erreur originale
-      }
-    }
-  } catch (err) {
-    console.error('Erreur lors du paiement:', err);
-    paymentError.value = "Une erreur s'est produite lors du paiement. Veuillez réessayer.";
+    // Redirect to pet owner dashboard after successful payment
+    setTimeout(() => {
+      router.push('/petowner');
+    }, 2000);
+  } catch (error) {
+    console.error('Payment error:', error);
+    paymentError.value = 'Payment processing failed. Please try again.';
   } finally {
     isProcessingPayment.value = false;
   }
 };
 
-// Fonction pour ignorer le paiement (mode test)
+// Skip payment (for test mode)
 const skipPayment = async () => {
+  if (!createdBookingId.value) {
+    paymentError.value = 'No booking to process';
+    return;
+  }
+  
   try {
-    // Mettre à jour le statut de la réservation sans paiement
-    await apiService.updateBookingStatus(createdBookingId.value, 'accepted');
+    // Mark the booking as paid instead of just accepted
+    await apiService.updateBookingStatus(createdBookingId.value, 'paid');
     
-    // Afficher le message de succès
     paymentSuccess.value = true;
     
-    // Rediriger vers la page du pet owner après un court délai
+    // Redirect to pet owner dashboard
     setTimeout(() => {
       router.push('/petowner');
-    }, 3000);
-  } catch (err) {
-    console.error('Erreur lors de la validation de la réservation:', err);
-    paymentError.value = "Une erreur s'est produite lors de la validation de la réservation. Veuillez réessayer.";
+    }, 2000);
+  } catch (error) {
+    console.error('Error skipping payment:', error);
+    paymentError.value = 'Failed to process booking. Please try again.';
   }
 };
 
+// Navigation functions
+const goToLogin = () => {
+  router.push({ 
+    name: 'Login',
+    query: { redirect: route.fullPath }
+  });
+};
+
+const goToRegister = () => {
+  router.push({ 
+    name: 'Register',
+    query: { redirect: route.fullPath }
+  });
+};
+
 onMounted(async () => {
-  const sitterId = route.params.id;
-  console.log('Sitter ID:', sitterId);  // Log pour vérifier l'ID
-
   try {
-    // Récupérer les informations du pet sitter (visible pour tous)
-    const sitterResponse = await apiService.getUserById(sitterId);
-    sitter.value = sitterResponse;
-    console.log('Sitter data:', sitter.value);
-
-    // Si l'utilisateur est connecté, récupérer ses animaux pour la réservation
-    if (isLoggedIn.value) {
-      // Récupérer les données de l'utilisateur connecté
-      const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const currentUserId = userData.user_id;
-      
-      if (currentUserId) {
-        // Récupérer UNIQUEMENT les animaux appartenant au propriétaire connecté
-        const userAnimals = await apiService.getAnimalsByOwner(currentUserId);
-        animals.value = userAnimals;
-        console.log('Animaux de l\'utilisateur:', animals.value);
-      }
+    // Get sitter details from API using the ID from the route
+    const sitterId = route.params.id;
+    sitter.value = await apiService.getUserById(sitterId);
+    
+    // Get user's animals if logged in as pet owner
+    if (isLoggedIn.value && userHasRole('petowner')) {
+      const userData = JSON.parse(sessionStorage.getItem('user'));
+      animals.value = await apiService.getAnimalsByOwner(userData.user_id);
     }
-
+    
     loading.value = false;
   } catch (err) {
-    console.error('Erreur lors du chargement des données:', err);
-    error.value = 'Impossible de charger les informations du pet sitter. Veuillez réessayer plus tard.';
+    console.error('Error loading data:', err);
+    error.value = 'Failed to load pet sitter details';
     loading.value = false;
   }
 });
 
-async function submitBooking() {
-  try {
-    // Vérifier si l'utilisateur est connecté
-    if (!isLoggedIn.value) {
-      goToLogin();
-      return;
-    }
-
-    bookingError.value = null;
-
-    const start = new Date(booking.startDate);
-    const end = new Date(booking.endDate);
-    const today = new Date();
-
-    if (start < today) {
-      bookingError.value = "La date de début ne peut pas être dans le passé";
-      return;
-    }
-
-    if (end <= start) {
-      bookingError.value = "La date de fin doit être après la date de début";
-      return;
-    }
-
-    // Créer la réservation
-    try {
-      const newBooking = await apiService.createBooking({
-        animal: parseInt(booking.animalId),
-        sitter: parseInt(route.params.id),
-        start_date: booking.startDate,
-        end_date: booking.endDate,
-        status: 'pending'
-      });
-
-      console.log('Réservation créée avec succès:', newBooking);
-      
-      // Stocker l'ID de la réservation créée pour le paiement
-      createdBookingId.value = newBooking.id;
-      
-      // Indiquer que la réservation a été créée avec succès
-      bookingSuccess.value = true;
-      
-    } catch (bookingError) {
-      console.warn('Erreur reçue, mais vérifions si la réservation a été créée');
-      
-      try {
-        // Attendre un court instant pour laisser le temps à la BD de se mettre à jour
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Récupérer toutes les réservations récentes
-        const allBookings = await apiService.getAllBookings();
-        
-        // Trouver la réservation la plus récente pour le même animal et pet sitter
-        const recentBooking = allBookings.find(b => 
-          b.animal === parseInt(booking.animalId) && 
-          b.sitter === parseInt(route.params.id) &&
-          b.start_date === booking.startDate &&
-          b.end_date === booking.endDate
-        );
-        
-        if (recentBooking) {
-          console.log('Réservation trouvée malgré l\'erreur:', recentBooking);
-          createdBookingId.value = recentBooking.id;
-          bookingSuccess.value = true;
-          return; // Sortir de la fonction car la réservation est créée
-        } else {
-          // La réservation n'a pas été trouvée, il y a un vrai problème
-          throw bookingError;
-        }
-      } catch (checkError) {
-        console.error('Erreur lors de la vérification des réservations:', checkError);
-        throw bookingError;
-      }
-    }
-
-  } catch (err) {
-    console.error('Erreur lors de la réservation:', err);
-    
-    // Si l'erreur contient un message de l'API, l'afficher
-    if (err.response && err.response.data) {
-      if (typeof err.response.data === 'object' && err.response.data.error) {
-        bookingError.value = err.response.data.error;
-      } else if (typeof err.response.data === 'string') {
-        bookingError.value = err.response.data;
-      } else {
-        bookingError.value = `Erreur: ${JSON.stringify(err.response.data)}`;
-      }
-    } else {
-      bookingError.value = "Une erreur s'est produite lors de la réservation. Veuillez réessayer.";
-    }
-  }
-}
+// Watch for date changes to update the price
+watch(() => [booking.startDate, booking.endDate], calculatePrice);
 </script>
 
 <style scoped>
 .view-container {
-  min-height: calc(100vh - var(--header-height));
+  width: 100%;
+  max-width: var(--max-content-width, 1200px);
+  margin: 0 auto;
+  padding: var(--space-xl, 2rem);
 }
 
 .petsitter-detail {
-  width: 100%;
-  max-width: var(--max-content-width);
-  margin: 0 auto;
-  padding: var(--space-xl);
+  background-color: var(--color-background, #fff);
+  border-radius: var(--border-radius-lg, 0.5rem);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+  overflow: hidden;
 }
 
-.loading, .error {
-  text-align: center;
-  padding: var(--space-xl);
-  font-size: 18px;
-}
-
-.error {
-  color: var(--color-danger);
+.back-link {
+  margin-bottom: var(--space-md, 1rem);
+  padding: var(--space-md, 1rem);
 }
 
 .back-link a {
-  color: var(--color-primary);
+  color: var(--color-primary, #ff8c00);
   text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s ease;
 }
 
-.sitter-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xl);
+.back-link a:hover {
+  color: var(--color-primary-hover, #e67e00);
 }
 
-.sitter-profile, .booking-section, .pricing-info {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-lg);
+.sitter-profile {
+  padding: var(--space-md, 1rem);
+  border-bottom: 1px solid var(--color-border, #eaeaea);
+}
+
+.sitter-header {
+  margin-bottom: var(--space-lg, 1.5rem);
 }
 
 .sitter-header h1 {
-  color: var(--color-heading);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs, 0.5rem);
+  font-size: 1.8rem;
+  color: var(--color-heading, #333);
 }
 
 .sitter-contact {
-  color: var(--color-text-light);
+  color: var(--color-text-light, #666);
+  font-size: 0.95rem;
+}
+
+.sitter-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg, 1.5rem);
+}
+
+.sitter-info {
+  flex: 1;
+  min-width: 280px;
 }
 
 .sitter-info h2 {
-  color: var(--color-heading);
-  font-size: 18px;
-  margin: var(--space-lg) 0 var(--space-sm);
+  color: var(--color-heading, #333);
+  font-size: 1.2rem;
+  margin-top: var(--space-md, 1rem);
+  margin-bottom: var(--space-sm, 0.75rem);
 }
 
-.ratings .stars {
-  color: var(--color-warning);
+.sitter-info ul {
+  padding-left: var(--space-lg, 1.5rem);
+  margin: var(--space-sm, 0.75rem) 0;
+}
+
+.ratings {
+  margin-top: var(--space-lg, 1.5rem);
+}
+
+.stars {
+  color: var(--color-primary, #ff8c00);
+  font-size: 1.25rem;
+}
+
+.rating-score {
+  color: var(--color-text, #333);
+  margin-left: var(--space-sm, 0.75rem);
+  font-size: 0.95rem;
+}
+
+.pricing-info {
+  background-color: var(--color-background-soft, #f9f9f9);
+  padding: var(--space-lg, 1.5rem);
+  border-bottom: 1px solid var(--color-border, #eaeaea);
+}
+
+.pricing-info h2 {
+  color: var(--color-heading, #333);
+  margin-bottom: var(--space-sm, 0.75rem);
+}
+
+.pricing-details {
+  font-size: 1.1rem;
+}
+
+.price {
+  color: var(--color-primary, #ff8c00);
+  font-weight: 700;
+}
+
+.booking-section {
+  padding: var(--space-lg, 1.5rem);
+  background-color: var(--color-background, #fff);
+}
+
+.booking-section h2 {
+  color: var(--color-heading, #333);
+  margin-bottom: var(--space-lg, 1.5rem);
+  font-size: 1.5rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 1rem);
 }
 
 .form-group {
-  margin-bottom: var(--space-md);
+  display: flex;
+  flex-direction: column;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: var(--space-xs);
-  font-weight: 600;
-  color: var(--color-text);
+label {
+  margin-bottom: var(--space-xs, 0.5rem);
+  font-weight: 500;
+  color: var(--color-text, #333);
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: var(--space-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  font-size: 16px;
+select, input, textarea {
+  padding: var(--space-sm, 0.75rem);
+  border: 1px solid var(--color-border, #eaeaea);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  font-size: 1rem;
+}
+
+select:focus, input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #ff8c00);
 }
 
 .price-calculation {
-  margin: var(--space-md) 0;
-  padding: var(--space-md);
-  background-color: var(--color-background-mute);
-  border-radius: var(--border-radius-sm);
-  border-left: 4px solid var(--color-primary);
+  background-color: var(--color-background-soft, #f9f9f9);
+  padding: var(--space-md, 1rem);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  margin: var(--space-sm, 0.75rem) 0;
 }
 
 .total-price {
-  color: var(--color-secondary);
-  font-weight: 600;
+  color: var(--color-primary, #ff8c00);
+  font-size: 1.2rem;
+  margin-top: var(--space-xs, 0.5rem);
 }
 
-.submit-btn, .payment-btn {
-  background-color: var(--color-secondary);
+.submit-btn, .login-btn, .register-btn {
+  background-color: var(--color-primary, #ff8c00);
   color: white;
   border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-sm);
-  font-size: 16px;
+  padding: var(--space-md, 1rem);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color var(--transition-speed);
-  width: 100%;
+  transition: background-color 0.2s ease;
 }
 
-.submit-btn:hover:not(:disabled), 
-.payment-btn:hover:not(:disabled) {
-  background-color: var(--color-secondary-hover);
+.submit-btn:hover, .login-btn:hover {
+  background-color: var(--color-primary-hover, #e67e00);
 }
 
-.success-message {
-  background-color: var(--color-success-light);
-  color: var(--color-success-dark);
-  padding: var(--space-md);
-  border-radius: var(--border-radius-sm);
-  margin-top: var(--space-md);
+.register-btn {
+  background-color: var(--color-secondary, #2c3e50);
+}
+
+.register-btn:hover {
+  background-color: var(--color-secondary-hover, #1a2530);
+}
+
+.success-message, .payment-success {
+  background-color: var(--color-success-light, #d4edda);
+  color: var(--color-success, #155724);
+  padding: var(--space-md, 1rem);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  margin: var(--space-md, 1rem) 0;
 }
 
 .error-message {
-  background-color: var(--color-danger-light);
-  color: var(--color-danger-dark);
-  padding: var(--space-md);
-  border-radius: var(--border-radius-sm);
-  margin-top: var(--space-md);
+  background-color: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger, #721c24);
+  padding: var(--space-md, 1rem);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  margin: var(--space-md, 1rem) 0;
+}
+
+.payment-section {
+  margin-top: var(--space-lg, 1.5rem);
+  border-top: 1px dashed var(--color-border, #eaeaea);
+  padding-top: var(--space-md, 1rem);
+}
+
+.test-mode-notice {
+  background-color: var(--color-info-light, #d1ecf1);
+  color: var(--color-info, #0c5460);
+  padding: var(--space-sm, 0.75rem);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  margin-bottom: var(--space-md, 1rem);
+}
+
+.payment-options-container {
+  text-align: center;
+  margin: var(--space-md, 1rem) 0;
+}
+
+.skip-payment-btn {
+  background-color: var(--color-secondary, #2c3e50);
+  color: white;
+  border: none;
+  padding: var(--space-sm, 0.75rem) var(--space-md, 1rem);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.skip-payment-btn:hover {
+  background-color: var(--color-secondary-hover, #1a2530);
+}
+
+.payment-details {
+  margin-top: var(--space-lg, 1.5rem);
+}
+
+.payment-method {
+  margin: var(--space-md, 1rem) 0;
+}
+
+.payment-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md, 1rem);
+  margin-top: var(--space-sm, 0.75rem);
+}
+
+.card-details {
+  margin-top: var(--space-md, 1rem);
+}
+
+.card-info-row {
+  display: flex;
+  gap: var(--space-md, 1rem);
+}
+
+.card-info-row .form-group {
+  flex: 1;
+}
+
+.payment-btn {
+  background-color: var(--color-success, #28a745);
+  color: white;
+  border: none;
+  padding: var(--space-md, 1rem);
+  border-radius: var(--border-radius-sm, 0.25rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: var(--space-md, 1rem);
+  width: 100%;
+}
+
+.payment-btn:hover:not(:disabled) {
+  background-color: var(--color-success-hover, #218838);
+}
+
+.payment-btn:disabled {
+  background-color: var(--color-text-light, #6c757d);
+  cursor: not-allowed;
 }
 
 .login-prompt {
-  background-color: var(--color-background-mute);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
   text-align: center;
-  border-left: 5px solid var(--color-primary);
-  margin-top: var(--space-md);
-}
-
-.role-message {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 25px;
-  text-align: center;
-  border-left: 5px solid #e67e22;
-  margin-top: 20px;
-}
-
-.navigation-options {
-  margin-top: 20px;
-}
-
-.nav-btn {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #3498db;
-  color: white;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.nav-btn:hover {
-  background-color: #2980b9;
+  padding: var(--space-lg, 1.5rem);
+  background-color: var(--color-background-soft, #f9f9f9);
 }
 
 .login-buttons {
   display: flex;
+  gap: var(--space-md, 1rem);
   justify-content: center;
-  gap: var(--space-md);
-  margin-top: var(--space-md);
+  margin-top: var(--space-md, 1rem);
 }
 
-.login-btn {
-  background-color: var(--color-primary);
+.role-message {
+  text-align: center;
+  padding: var(--space-lg, 1.5rem);
+  background-color: var(--color-info-light, #d1ecf1);
+  color: var(--color-info, #0c5460);
+}
+
+.nav-btn {
+  display: inline-block;
+  background-color: var(--color-primary, #ff8c00);
   color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-sm);
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color var(--transition-speed);
+  padding: var(--space-sm, 0.75rem) var(--space-md, 1rem);
+  text-decoration: none;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  margin-top: var(--space-md, 1rem);
 }
 
-.login-btn:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.register-btn {
-  background-color: var(--color-secondary);
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-sm);
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color var(--transition-speed);
-}
-
-.register-btn:hover {
-  background-color: var(--color-secondary-hover);
+.nav-btn:hover {
+  background-color: var(--color-primary-hover, #e67e00);
 }
 
 @media (max-width: 768px) {
-  .petsitter-detail {
-    padding: var(--space-md);
+  .view-container {
+    padding: var(--space-md, 1rem);
   }
-  
-  .login-buttons {
+
+  .sitter-body {
     flex-direction: column;
-    gap: var(--space-sm);
   }
-  
+
   .card-info-row {
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-sm, 0.75rem);
   }
+
+  .login-buttons {
+    flex-direction: column;
+  }
+}
+
+.loading, .error {
+  padding: var(--space-lg, 1.5rem);
+  text-align: center;
+  margin: var(--space-lg, 1.5rem) 0;
+}
+
+.error {
+  color: var(--color-danger, #721c24);
 }
 </style>

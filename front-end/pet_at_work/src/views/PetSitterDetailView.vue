@@ -51,8 +51,8 @@
           <p class="pricing-details">Guarding: <span class="price">10£</span> per day</p>
         </div>
         
-        <!-- Section de réservation - conditionnelle en fonction de l'état de connexion -->
-        <div v-if="isLoggedIn" class="booking-section">
+        <!-- Section de réservation - vérification du rôle utilisateur -->
+        <div v-if="isLoggedIn && userHasRole('petowner')" class="booking-section">
           <h2>Book this pet sitter</h2>
           <form @submit.prevent="submitBooking">
             <div class="form-group">
@@ -172,6 +172,15 @@
           </div>
         </div>
         
+        <!-- Message pour les utilisateurs connectés qui ne sont pas pet owners -->
+        <div v-else-if="isLoggedIn && !userHasRole('petowner')" class="role-message">
+          <p>You are currently logged in as a <strong>{{ userRole }}</strong>.</p>
+          <p>Only pet owners can make reservations with pet sitters.</p>
+          <div class="navigation-options">
+            <router-link :to="'/' + userRole" class="nav-btn">Go to your {{ userRole }} dashboard</router-link>
+          </div>
+        </div>
+        
         <!-- Message pour encourager la connexion - visible uniquement pour les utilisateurs non connectés -->
         <div v-else class="login-prompt">
           <p>To book the services of this pet sitter, you need to log in to your account.</p>
@@ -224,6 +233,16 @@ const booking = reactive({
 const isLoggedIn = computed(() => {
   return !!sessionStorage.getItem('user');
 });
+
+// Vérifier le rôle de l'utilisateur
+const userRole = computed(() => {
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+  return user.role || '';
+});
+
+const userHasRole = (role) => {
+  return userRole.value === role;
+};
 
 // Rediriger vers la page de connexion avec le retour à cette page
 const goToLogin = () => {
@@ -771,6 +790,33 @@ async function submitBooking() {
   text-align: center;
   border-left: 5px solid #3498db;
   margin-top: 20px;
+}
+
+.role-message {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 25px;
+  text-align: center;
+  border-left: 5px solid #e67e22;
+  margin-top: 20px;
+}
+
+.navigation-options {
+  margin-top: 20px;
+}
+
+.nav-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.nav-btn:hover {
+  background-color: #2980b9;
 }
 
 .login-buttons {

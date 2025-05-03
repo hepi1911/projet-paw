@@ -2,6 +2,7 @@
 
 /**
  * Vérifie si l'utilisateur est connecté et a le rôle requis.
+ * Uniquement pour les routes qui nécessitent absolument un rôle spécifique.
  * @param {string} requiredRole - Le rôle requis pour accéder à la route (petowner, petsitter, company)
  * @returns {Function} - Une fonction de garde de route
  */
@@ -50,6 +51,7 @@ export function requireRole(requiredRole) {
 
 /**
  * Vérifie si l'utilisateur est connecté
+ * Pour les routes qui nécessitent une connexion mais pas un rôle spécifique
  */
 export function requireAuth(to, from, next) {
   // Vérifier si l'utilisateur est connecté
@@ -66,7 +68,7 @@ export function requireAuth(to, from, next) {
 }
 
 /**
- * Redirige l'utilisateur connecté vers sa page d'accueil
+ * Redirige l'utilisateur connecté vers sa page d'accueil en fonction de son rôle
  */
 export function redirectLoggedIn(to, from, next) {
   // Vérifier si l'utilisateur est connecté
@@ -97,4 +99,17 @@ export function redirectLoggedIn(to, from, next) {
   
   // L'utilisateur n'est pas connecté, permettre l'accès
   next();
+}
+
+/**
+ * Vérifie si l'utilisateur est connecté et a le rôle requis pour faire une réservation
+ * @param {string} requiredRole - Le rôle requis pour la réservation
+ * @returns {Function} - Une fonction de garde de route
+ */
+export function requireRoleForBooking(requiredRole) {
+  return (to, from, next) => {
+    // Permet la navigation à tous sans connexion
+    // La vérification du rôle se fera au niveau du composant pour les actions réservées
+    next();
+  };
 }

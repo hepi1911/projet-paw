@@ -96,14 +96,7 @@
             <div class="payment-section">
               <h3>Finalise your booking</h3>
               <div class="test-mode-notice">
-                <p><strong>Test mode activated :</strong> Payments are optional during this phase.</p>
-              </div>
-              <div class="payment-options-container">
-                <button @click="skipPayment" class="skip-payment-btn">
-                  Continue without paying (test mode)
-                </button>
-                <p>-- ou --</p>
-                <p>Proceed to payment (optional) :</p>
+                <p><strong>Information :</strong> Payment is required to confirm your booking.</p>
               </div>
               
               <div class="payment-details">
@@ -320,9 +313,8 @@ const processPayment = async () => {
   
   try {
     const paymentData = {
-      booking_id: createdBookingId.value,
-      amount: totalPrice.value,
-      payment_method: paymentMethod.value,
+      booking: createdBookingId.value,
+      payment_type: paymentMethod.value,
       card_details: paymentMethod.value === 'card' ? {
         card_number: paymentDetails.cardNumber,
         expiry_date: paymentDetails.expiryDate,
@@ -345,29 +337,6 @@ const processPayment = async () => {
     paymentError.value = 'Payment processing failed. Please try again.';
   } finally {
     isProcessingPayment.value = false;
-  }
-};
-
-// Skip payment (for test mode)
-const skipPayment = async () => {
-  if (!createdBookingId.value) {
-    paymentError.value = 'No booking to process';
-    return;
-  }
-  
-  try {
-    // Mark the booking as paid instead of just accepted
-    await apiService.updateBookingStatus(createdBookingId.value, 'paid');
-    
-    paymentSuccess.value = true;
-    
-    // Redirect to pet owner dashboard
-    setTimeout(() => {
-      router.push('/petowner');
-    }, 2000);
-  } catch (error) {
-    console.error('Error skipping payment:', error);
-    paymentError.value = 'Failed to process booking. Please try again.';
   }
 };
 
@@ -630,20 +599,6 @@ select:focus, input:focus, textarea:focus {
 .payment-options-container {
   text-align: center;
   margin: var(--space-md, 1rem) 0;
-}
-
-.skip-payment-btn {
-  background-color: var(--color-secondary, #2c3e50);
-  color: white;
-  border: none;
-  padding: var(--space-sm, 0.75rem) var(--space-md, 1rem);
-  border-radius: var(--border-radius-sm, 0.25rem);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.skip-payment-btn:hover {
-  background-color: var(--color-secondary-hover, #1a2530);
 }
 
 .payment-details {

@@ -431,6 +431,13 @@ class AnimalViewSet(viewsets.ModelViewSet):
         if user.role == 'petowner':
             return Animal.objects.filter(owner=user)
         
+        # Get the owner_id filter parameter if it exists
+        owner_id = self.request.query_params.get('owner')
+        
+        # If owner_id is provided and matches the current user, filter by owner
+        if owner_id and str(user.id) == owner_id:
+            return Animal.objects.filter(owner_id=owner_id)
+        
         # Pet sitters and companies can see all animals
         # to facilitate booking management
         return Animal.objects.all()

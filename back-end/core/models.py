@@ -215,6 +215,7 @@ class CompanyBooking(models.Model):
         ('accepted', 'Acceptée'),
         ('refused', 'Refusée'),
         ('cancelled', 'Annulée'),
+        ('paid', 'Payée'),  # Added 'paid' status to match Booking model
     ]
 
     animal = models.ForeignKey(Animal, on_delete=models.CASCADE)

@@ -852,6 +852,22 @@ const userHasRole = (role) => {
   return userData.role === role;
 };
 
+// Fonction pour récupérer la race d'un animal à partir de son ID
+const getAnimalBreed = (animalId) => {
+  try {
+    // Chercher l'animal dans la liste des animaux de l'utilisateur
+    const animal = userAnimals.value.find(animal => animal.id === animalId);
+    if (animal) {
+      return animal.breed;
+    }
+    // Si l'animal n'est pas trouvé, retourner une valeur par défaut
+    return '';
+  } catch (error) {
+    console.error('Error l\'animal:', error);
+    return '';
+  }
+};
+
 const filteredPetSitters = computed(() => {
   let sitters = petSitters.value;
   if (searchQuery.value) {

@@ -140,8 +140,15 @@ class Animal(models.Model):
     Modèle pour les animaux de compagnie enregistrés dans l'application.
     Model for pets registered in the application.
     """
+    ANIMAL_TYPE_CHOICES = [
+        ('dog', 'Dog'),
+        ('cat', 'Cat'),
+        ('other', 'Other'),
+    ]
+    
     owner = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'petowner'})
     name = models.CharField(max_length=100)
+    animal_type = models.CharField(max_length=10, choices=ANIMAL_TYPE_CHOICES, default='dog')
     breed = models.CharField(max_length=100, default="Non spécifiée")
     age = models.CharField(max_length=50, default="Non spécifié")
     maladie = models.CharField(max_length=200, null=True, blank=True, default="Aucune maladie connue")

@@ -76,22 +76,43 @@
 
       <!-- Section Réservations en attente -->
       <div v-if="!error && pendingBookings.length > 0" class="pending-bookings-section">
-        <h2>Pending bookings</h2>
-        <div class="bookings-list">
+        <h2 class="section-title">Pending bookings</h2>
+        <div class="bookings-grid">
           <div v-for="booking in pendingBookings" 
               :key="booking.id" 
               class="booking-card pending">
-            <div class="booking-info">
-              <h3>{{ getAnimalName(booking.animal) }}</h3>
-              <p><strong>Owner:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
-              <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
-              <p class="status"><strong>Status:</strong> On hold</p>
+            <div class="booking-banner">
+              <span class="status-badge">{{ getStatusLabel('pending') }}</span>
+            </div>
+            <div class="booking-content">
+              <div class="booking-avatar">
+                <div class="avatar-image">🐾</div>
+              </div>
+              
+              <h3 class="booking-title">{{ getAnimalName(booking.animal) }}</h3>
+              
+              <div class="booking-details">
+                <div class="detail">
+                  <i class="detail-icon">👤</i>
+                  <span>{{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</span>
+                </div>
+                <div class="detail">
+                  <i class="detail-icon">🗓️</i>
+                  <span>{{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</span>
+                </div>
+                <div class="detail">
+                  <i class="detail-icon">⏳</i>
+                  <span class="status-text pending">{{ getStatusLabel('pending') }}</span>
+                </div>
+              </div>
               
               <div class="booking-actions">
                 <button class="accept-btn" @click="updateBookingStatus(booking.id, 'accepted')" :disabled="isUpdating">
+                  <i class="btn-icon">✅</i>
                   {{ isUpdating === booking.id ? 'En cours...' : 'Accepter' }}
                 </button>
                 <button class="refuse-btn" @click="updateBookingStatus(booking.id, 'refused')" :disabled="isUpdating">
+                  <i class="btn-icon">❌</i>
                   {{ isUpdating === booking.id ? 'En cours...' : 'Refuser' }}
                 </button>
               </div>
@@ -100,31 +121,63 @@
         </div>
       </div>
       <div v-else-if="!error && bookings.length === 0" class="empty-message">
+        <div class="empty-icon">📅</div>
+        <h3>No bookings</h3>
         <p>No bookings pending at the moment.</p>
       </div>
 
       <!-- Section Toutes les Réservations -->
       <div v-if="!error && bookings.length > 0" class="bookings-section">
-        <h2>All my bookings</h2>
-        <div class="bookings-list">
+        <h2 class="section-title">All my bookings</h2>
+        <div class="bookings-grid">
           <div v-for="booking in bookings" 
               :key="booking.id" 
               class="booking-card"
               :class="booking.status">
-            <div class="booking-info">
-              <h3>{{ getAnimalName(booking.animal) }}</h3>
-              <p><strong>Owner:</strong> {{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</p>
-              <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
-              <p class="status"><strong>Status:</strong> {{ getStatusLabel(booking.status) }}</p>
+            <div class="booking-banner">
+              <span class="status-badge">{{ getStatusLabel(booking.status) }}</span>
+            </div>
+            <div class="booking-content">
+              <div class="booking-avatar">
+                <div class="avatar-image">🐾</div>
+              </div>
+              
+              <h3 class="booking-title">{{ getAnimalName(booking.animal) }}</h3>
+              
+              <div class="booking-details">
+                <div class="detail">
+                  <i class="detail-icon">👤</i>
+                  <span>{{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</span>
+                </div>
+                <div class="detail">
+                  <i class="detail-icon">🗓️</i>
+                  <span>{{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</span>
+                </div>
+                <div class="detail">
+                  <i class="detail-icon" v-if="booking.status === 'pending'">⏳</i>
+                  <i class="detail-icon" v-else-if="booking.status === 'accepted'">✅</i>
+                  <i class="detail-icon" v-else-if="booking.status === 'refused'">❌</i>
+                  <i class="detail-icon" v-else-if="booking.status === 'cancelled'">🚫</i>
+                  <span class="status-text" :class="booking.status">{{ getStatusLabel(booking.status) }}</span>
+                </div>
+              </div>
+              
               <div v-if="booking.status === 'accepted'" class="booking-actions">
-                <button class="book-company-btn" 
-                        @click="bookCompanyForAnimal(booking)" 
-                        :disabled="animalsWithCompanyBookings[booking.animal]"
-                        :title="animalsWithCompanyBookings[booking.animal] ? 'Cet animal a déjà une réservation auprès d\'une entreprise' : ''">
+                <button 
+                  class="book-company-btn" 
+                  @click="bookCompanyForAnimal(booking)" 
+                  :disabled="animalsWithCompanyBookings[booking.animal]"
+                  :title="animalsWithCompanyBookings[booking.animal] ? 'Cet animal a déjà une réservation auprès d\'une entreprise' : ''"
+                >
+                  <i class="btn-icon">🏢</i>
                   {{ animalsWithCompanyBookings[booking.animal] ? 'Déjà réservé' : 'Réserver pour cet animal' }}
                 </button>
-                <div v-if="animalsWithCompanyBookings[booking.animal]" class="reservation-info">
-                  <p>Existing booking with {{ getCompanyName(animalsWithCompanyBookings[booking.animal].company) }}</p>
+              </div>
+              
+              <div v-if="animalsWithCompanyBookings[booking.animal]" class="reservation-info">
+                <div class="detail">
+                  <i class="detail-icon">🔄</i>
+                  <span>Existing booking with {{ getCompanyName(animalsWithCompanyBookings[booking.animal].company) }}</span>
                 </div>
               </div>
             </div>
@@ -134,15 +187,44 @@
 
       <!-- Section Réservations complètes (client → pet sitter → compagnie) -->
       <div v-if="!error && linkedBookings.length > 0" class="linked-bookings-section">
-        <h2>Bookings client → you → company</h2>
-        <div class="bookings-list">
-          <div v-for="(item, idx) in linkedBookings" :key="idx" class="booking-card accepted">
-            <div>
-              <h3>Pet : {{ getAnimalName(item.clientBooking.animal) }}</h3>
-              <p><strong>Owner:</strong> {{ getOwnerName(item.clientBooking.animal_owner) }}</p>
-              <p><strong>Dates:</strong> {{ formatDate(item.clientBooking.start_date) }} - {{ formatDate(item.clientBooking.end_date) }}</p>
-              <p><strong>Company booking:</strong> {{ getCompanyName(item.companyBooking.company) }} ({{ formatDate(item.companyBooking.start_date) }} - {{ formatDate(item.companyBooking.end_date) }})</p>
-              <p><strong>Company status:</strong> {{ getStatusLabel(item.companyBooking.status) }}</p>
+        <h2 class="section-title">Bookings client → you → company</h2>
+        <div class="bookings-grid">
+          <div v-for="(item, idx) in linkedBookings" :key="idx" class="booking-card linked">
+            <div class="booking-banner special-banner">
+              <span class="status-badge">Linked booking</span>
+            </div>
+            <div class="booking-content">
+              <div class="booking-avatar">
+                <div class="avatar-image">🔄</div>
+              </div>
+              
+              <h3 class="booking-title">{{ getAnimalName(item.clientBooking.animal) }}</h3>
+              
+              <div class="booking-details">
+                <div class="detail">
+                  <i class="detail-icon">👤</i>
+                  <span>{{ getOwnerName(item.clientBooking.animal_owner) }}</span>
+                </div>
+                <div class="detail">
+                  <i class="detail-icon">🗓️</i>
+                  <span>{{ formatDate(item.clientBooking.start_date) }} - {{ formatDate(item.clientBooking.end_date) }}</span>
+                </div>
+                <div class="detail company-detail">
+                  <i class="detail-icon">🏢</i>
+                  <span>{{ getCompanyName(item.companyBooking.company) }}</span>
+                </div>
+                <div class="detail">
+                  <i class="detail-icon">🗓️</i>
+                  <span>{{ formatDate(item.companyBooking.start_date) }} - {{ formatDate(item.companyBooking.end_date) }}</span>
+                </div>
+                <div class="detail">
+                  <i class="detail-icon" v-if="item.companyBooking.status === 'pending'">⏳</i>
+                  <i class="detail-icon" v-else-if="item.companyBooking.status === 'accepted'">✅</i>
+                  <i class="detail-icon" v-else-if="item.companyBooking.status === 'refused'">❌</i>
+                  <i class="detail-icon" v-else-if="item.companyBooking.status === 'cancelled'">🚫</i>
+                  <span class="status-text" :class="item.companyBooking.status">{{ getStatusLabel(item.companyBooking.status) }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -864,6 +946,311 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
+.section-title {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-heading);
+  position: relative;
+  display: inline-block;
+}
+
+.section-title:after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 50%;
+  height: 4px;
+  background-color: var(--color-primary);
+  border-radius: 2px;
+}
+
+.bookings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-md);
+}
+
+.booking-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+  position: relative;
+}
+
+.booking-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.booking-banner {
+  height: 40px;
+  position: relative;
+  background-color: var(--color-background-mute);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--space-md);
+}
+
+.booking-card.pending .booking-banner {
+  background-color: var(--color-warning);
+}
+
+.booking-card.accepted .booking-banner {
+  background-color: var(--color-success);
+}
+
+.booking-card.refused .booking-banner {
+  background-color: var(--color-danger);
+}
+
+.booking-card.cancelled .booking-banner {
+  background-color: var(--color-text-light);
+}
+
+.booking-card.linked .booking-banner.special-banner {
+  background-color: #6d28d9;  /* Couleur violet pour les réservations liées */
+}
+
+.status-badge {
+  color: white;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-sm);
+}
+
+.booking-content {
+  padding: var(--space-md);
+}
+
+.booking-avatar {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-sm) 0;
+}
+
+.booking-avatar .avatar-image {
+  width: 50px;
+  height: 50px;
+  background-color: var(--color-primary-light, #e0f2fe);
+  color: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.booking-title {
+  text-align: center;
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-md);
+  color: var(--color-heading);
+}
+
+.booking-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.detail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+}
+
+.detail-icon {
+  font-size: 1.2rem;
+}
+
+.company-detail {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--color-border);
+}
+
+.reservation-info {
+  background-color: var(--color-background-soft);
+  padding: var(--space-sm);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--space-md);
+  font-size: var(--font-size-sm);
+}
+
+.booking-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin-top: var(--space-md);
+}
+
+.accept-btn, .refuse-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.book-company-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  background-color: var(--color-primary);
+  color: white;
+  transition: background-color var(--transition-speed);
+}
+
+.book-company-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.book-company-btn:disabled {
+  background-color: var(--color-text-light);
+  cursor: not-allowed;
+}
+
+.accept-btn {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.accept-btn:hover:not(:disabled) {
+  background-color: var(--color-success-dark);
+}
+
+.refuse-btn {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.refuse-btn:hover:not(:disabled) {
+  background-color: var(--color-danger-dark);
+}
+
+.status-text {
+  font-weight: 600;
+}
+
+.status-text.pending {
+  color: var(--color-warning);
+}
+
+.status-text.accepted {
+  color: var(--color-success);
+}
+
+.status-text.refused, .status-text.cancelled {
+  color: var(--color-danger);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+  color: var(--color-primary);
+}
+
+.companies-list-vertical {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-md);
+}
+
+.company-card-vertical {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+  padding: var(--space-md);
+}
+
+.company-card-vertical:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.company-info h3 {
+  margin-bottom: var(--space-sm);
+  color: var(--color-heading);
+}
+
+.capacity, .address {
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-light);
+}
+
+.company-card-actions {
+  margin-top: var(--space-md);
+}
+
+.reservation-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.reservation-btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.profile-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-xl);
+}
+
+.profile-actions {
+  margin-top: var(--space-md);
+}
+
+.edit-profile-btn {
+  background-color: var(--color-secondary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.edit-profile-btn:hover {
+  background-color: var(--color-secondary-hover);
+}
+
+.section-description {
+  margin-bottom: var(--space-lg);
+  color: var(--color-text-light);
+}
+
 @media (max-width: 768px) {
   .petsitter-dashboard {
     padding: var(--space-md);
@@ -878,6 +1265,11 @@ onMounted(async () => {
   .stats-grid {
     grid-template-columns: 1fr;
     gap: var(--space-md);
+  }
+
+  .bookings-grid,
+  .companies-list-vertical {
+    grid-template-columns: 1fr;
   }
 }
 </style>

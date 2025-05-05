@@ -224,6 +224,7 @@ class CompanyBooking(models.Model):
     end_date = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
+    company_paid = models.BooleanField(default=False)  # Track if the company has paid their share
 
     @property
     def total_days(self):
@@ -317,7 +318,7 @@ class Payment(models.Model):
         Returns a string representation of the payment.
         """
         if self.booking:
-            return f"Paiement de {self.amount}€ pour la réservation #{self.booking.id}"
+            return f"Payment of {self.amount}€ for a booking  #{self.booking.id}"
         elif self.company_booking:
-            return f"Paiement de {self.amount}€ pour la réservation d'entreprise #{self.company_booking.id}"
-        return f"Paiement de {self.amount}€"
+            return f"Payment of {self.amount}€ for a booking compagny #{self.company_booking.id}"
+        return f"Payment of {self.amount}€"

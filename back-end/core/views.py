@@ -879,6 +879,262 @@ class CompanyBookingViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(bookings, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
+    def update_status(self, request, pk=None):
+        """
+        Allows companies and pet owners to update a booking's status.
+        Companies need to pay their share when accepting a booking.
+        """
+        booking = self.get_object()
+        user = request.user
+        
+        # Verify that the user is either the company concerned or the animal owner
+        is_company = user.role == 'company' and booking.company.id == user.id
+        is_pet_owner = user.role == 'petowner' and booking.animal.owner.id == user.id
+        is_authorized = is_company or is_pet_owner or (user.is_staff or user.is_superuser)
+        
+        if not is_authorized:
+            return Response(
+                {'error': 'You are not authorized to modify this booking'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get the new status from the request
+        new_status = request.data.get('status')
+        
+        # Check that the status is valid
+        valid_statuses = [status_tuple[0] for status_tuple in CompanyBooking.STATUS_CHOICES]
+        if new_status not in valid_statuses:
+            return Response(
+                {'error': f'Invalid status. Valid statuses are: {", ".join(valid_statuses)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Special handling for company accepting a booking:
+        # Company must pay before the booking is confirmed as accepted
+        if is_company and new_status == 'accepted':
+            # If the company has not paid yet, we don't actually change the status
+            # We just inform them they need to pay first
+            if not booking.company_paid:
+                return Response({
+                    'message': 'Please proceed to payment to confirm this booking',
+                    'booking_id': booking.id,
+                    'amount': booking.total_price,
+                    'service_fee': 2.80,
+                    'total_amount': booking.total_price + 2.80,
+                    'requires_payment': True  # Flag for frontend to redirect to payment
+                }, status=status.HTTP_200_OK)
+            # If company has paid, we can proceed with the status change
+        
+        # Update the booking status (keep even if cancelled)
+        old_status = booking.status
+        booking.status = new_status
+        booking.save()
+        
+        # Send notification email
+        send_booking_status_email(booking, new_status, booking_type='company')
+        
+        # Create an adapted return message
+        status_labels = {
+            'pending': 'pending',
+            'accepted': 'accepted',
+            'refused': 'declined', 
+            'cancelled': 'cancelled',
+            'paid': 'paid'
+        }
+        status_label = status_labels.get(new_status, new_status)
+        
+        # Return the updated data
+        serializer = self.get_serializer(booking)
+        return Response({
+            'message': f'Booking successfully {status_label}',
+            'booking': serializer.data
+        })
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def company_payment(self, request, pk=None):
+        """
+        Process a payment from a company for a booking.
+        Companies need to pay to confirm their acceptance of a booking.
+        """
+        booking = self.get_object()
+        user = request.user
+        data = request.data.copy()
+        
+        # Check that the user is a company
+        if user.role != 'company' and not (user.is_staff or user.is_superuser):
+            return Response(
+                {'error': 'Only companies can make payments for this type of booking'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Verify that the user is the company concerned
+        if booking.company.id != user.id and not (user.is_staff or user.is_superuser):
+            return Response(
+                {'error': 'You can only pay for your own bookings'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Calculate amount to pay
+        amount = booking.total_price
+        service_fee = 2.80
+        total_amount = amount + service_fee
+        
+        # Create payment
+        payment_data = {
+            'company_booking': booking.id,
+            'amount': total_amount,  # Including service fee
+            'payment_status': 'completed',  # Assuming payment is immediately successful
+            'payment_type': data.get('payment_type', 'card'),
+            'transaction_id': f"TR-COMP-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+        }
+        
+        payment_serializer = PaymentSerializer(data=payment_data)
+        if payment_serializer.is_valid():
+            payment = payment_serializer.save()
+            
+            # Update booking status - mark as company_paid
+            booking.company_paid = True
+            booking.status = 'accepted'  # Company acceptance is now confirmed
+            booking.save()
+            
+            # Send notification email to both company and pet owner
+            send_booking_status_email(booking, booking.status, booking_type='company')
+            
+            # Send payment confirmation email to company
+            subject = f"Payment Confirmation - Booking #{booking.id}"
+            message = f"""Hello {user.name},
+
+Your payment of {total_amount}€ for the booking of {booking.animal.name} has been processed successfully.
+
+Transaction ID: {payment.transaction_id}
+
+The booking is now confirmed in your calendar.
+
+Thank you for using Pet at Work!
+"""
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print(f"Error sending confirmation email: {str(e)}")
+            
+            return Response({
+                'message': 'Payment processed successfully. The booking is now confirmed.',
+                'payment': payment_serializer.data,
+                'booking': CompanyBookingSerializer(booking).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(payment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def company_payment_flow(self, request):
+        """
+        Provides frontend with all necessary information to implement the company payment flow.
+        This endpoint helps the frontend understand how to handle company booking acceptance and payment.
+        """
+        user = request.user
+        
+        # Check that the user is a company
+        if user.role != 'company' and not (user.is_staff or user.is_superuser):
+            return Response(
+                {'error': 'Only companies can access this resource'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Return instructions and endpoints for the frontend
+        return Response({
+            'flow': {
+                'description': 'Process for company booking acceptance and payment',
+                'steps': [
+                    {
+                        'order': 1,
+                        'action': 'Initial acceptance',
+                        'endpoint': '/api/company-bookings/{id}/update_status/',
+                        'method': 'PATCH',
+                        'payload': {'status': 'accepted'},
+                        'result': 'Will return requires_payment=true if payment is needed'
+                    },
+                    {
+                        'order': 2,
+                        'action': 'Process payment',
+                        'endpoint': '/api/company-bookings/{id}/company_payment/',
+                        'method': 'POST',
+                        'payload': {'payment_type': 'card'},
+                        'result': 'Marks booking as paid and confirmed'
+                    }
+                ],
+                'sample_response_requiring_payment': {
+                    'message': 'Please proceed to payment to confirm this booking',
+                    'booking_id': 123,
+                    'amount': 50.0,
+                    'service_fee': 2.80,
+                    'total_amount': 52.80,
+                    'requires_payment': True
+                }
+            },
+            'active_bookings_requiring_payment': []
+        })
+        
+        # Optional: list active bookings that require payment
+        pending_bookings = CompanyBooking.objects.filter(
+            company=user, 
+            status='pending',
+            company_paid=False
+        )
+        
+        booking_data = []
+        for booking in pending_bookings:
+            booking_data.append({
+                'id': booking.id,
+                'animal_name': booking.animal.name,
+                'start_date': booking.start_date,
+                'end_date': booking.end_date,
+                'amount': booking.total_price,
+                'service_fee': 2.80,
+                'total_amount': booking.total_price + 2.80
+            })
+        
+        response_data = {
+            'flow': {
+                'description': 'Process for company booking acceptance and payment',
+                'steps': [
+                    {
+                        'order': 1,
+                        'action': 'Initial acceptance',
+                        'endpoint': '/api/company-bookings/{id}/update_status/',
+                        'method': 'PATCH',
+                        'payload': {'status': 'accepted'},
+                        'result': 'Will return requires_payment=true if payment is needed'
+                    },
+                    {
+                        'order': 2,
+                        'action': 'Process payment',
+                        'endpoint': '/api/company-bookings/{id}/company_payment/',
+                        'method': 'POST',
+                        'payload': {'payment_type': 'card'},
+                        'result': 'Marks booking as paid and confirmed'
+                    }
+                ],
+                'sample_response_requiring_payment': {
+                    'message': 'Please proceed to payment to confirm this booking',
+                    'booking_id': 123,
+                    'amount': 50.0,
+                    'service_fee': 2.80,
+                    'total_amount': 52.80,
+                    'requires_payment': True
+                }
+            },
+            'active_bookings_requiring_payment': booking_data
+        }
+        
+        return Response(response_data)
+
 class PetSitterCompanyBookingViewSet(viewsets.ModelViewSet):
     """
     ViewSet to manage bookings between pet sitters and companies.
@@ -993,6 +1249,89 @@ class PetSitterCompanyBookingViewSet(viewsets.ModelViewSet):
             'booking': serializer.data
         })
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def shared_payment(self, request, pk=None):
+        """
+        Process a shared payment for a booking between pet sitter and company.
+        """
+        booking = self.get_object()
+        user = request.user
+        data = request.data.copy()
+        
+        # Verify the user is either the petsitter or company involved
+        is_petsitter = (user.role == 'petsitter' and booking.petsitter.id == user.id)
+        is_company = (user.role == 'company' and booking.company.id == user.id)
+        is_authorized = is_petsitter or is_company or (user.is_staff or user.is_superuser)
+        
+        if not is_authorized:
+            return Response(
+                {'error': 'You are not authorized to make payments for this booking'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Calculate amount to pay
+        amount = booking.service_cost if hasattr(booking, 'service_cost') and booking.service_cost else 50.0  # Default value if not set
+        service_fee = 2.80
+        total_amount = amount + service_fee
+        
+        # Create payment record
+        payment_data = {
+            'petsitter_company_booking': booking.id,
+            'amount': total_amount,
+            'payment_status': 'completed',
+            'payment_type': data.get('payment_type', 'card'),
+            'transaction_id': f"TR-SHARED-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+        }
+        
+        payment_serializer = PaymentSerializer(data=payment_data)
+        if payment_serializer.is_valid():
+            payment = payment_serializer.save()
+            
+            # Update booking status and mark as paid
+            booking.company_paid = True
+            
+            # If the booking status is pending, change it to accepted
+            if booking.status == 'pending':
+                booking.status = 'accepted'
+                
+            booking.save()
+            
+            # Send notification email
+            send_booking_status_email(booking, booking.status, booking_type='petsitter_company')
+            
+            # Send payment confirmation email
+            try:
+                recipient = booking.company if is_petsitter else booking.petsitter
+                subject = f"Payment Confirmation - Booking #{booking.id}"
+                message = f"""Hello {recipient.name},
+
+A payment of {total_amount}€ for your shared booking has been processed successfully.
+
+Transaction ID: {payment.transaction_id}
+Payment initiated by: {user.name}
+
+The booking is now confirmed in your calendar.
+
+Thank you for using Pet at Work!
+"""
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [recipient.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print(f"Error sending confirmation email: {str(e)}")
+            
+            return Response({
+                'message': 'Shared payment processed successfully. The booking is now confirmed.',
+                'payment': payment_serializer.data,
+                'booking': PetSitterCompanyBookingSerializer(booking).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(payment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class PaymentViewSet(viewsets.ModelViewSet):
     """
     ViewSet to manage payments related to bookings.
@@ -1071,9 +1410,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
                 
-                # Calculate total amount
-                amount = booking.total_price
-                
                 # Check if booking is already paid
                 if booking.status == 'paid':
                     return Response(
@@ -1081,9 +1417,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Mark as paid but preserve the original status for accept/refuse actions
-                # We'll track the payment status separately in the payment object
-                # This way, the booking status workflow can still function normally
+                # Calculate total amount with service fee
+                amount = booking.total_price
+                service_fee = 2.80
+                total_amount = amount + service_fee
                 
                 # Only update booking.status to 'paid' if it's already in 'accepted' status
                 # Keeping 'pending' status to allow for accept/refuse actions
@@ -1101,8 +1438,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
                 
-                # Calculate total amount
+                # Calculate total amount with service fee
                 amount = company_booking.total_price
+                service_fee = 2.80
+                total_amount = amount + service_fee
                 
                 # Check if booking is already paid
                 if company_booking.status == 'paid':
@@ -1126,7 +1465,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         payment_data = {
             'booking': booking_id,
             'company_booking': company_booking_id,
-            'amount': amount,
+            'amount': total_amount,  # Using total_amount which includes service fee
             'payment_status': 'completed',  # Assuming payment is immediately successful for this example
             'payment_type': data.get('payment_type', 'card'),
             'transaction_id': f"TR-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
@@ -1139,10 +1478,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
             # Send payment confirmation email
             if booking_id:
                 subject = f"Payment Confirmation - Booking #{booking_id}"
-                message = f"Hello {user.name},\n\nYour payment of {amount}€ for the booking of {booking.animal.name} with {booking.sitter.name} has been accepted.\n\nTransaction ID: {payment.transaction_id}\n\nThank you for using Pet at Work!"
+                message = f"Hello {user.name},\n\nYour payment of {total_amount}€ for the booking of {booking.animal.name} with {booking.sitter.name} has been accepted.\n\nTransaction ID: {payment.transaction_id}\n\nThank you for using Pet at Work!"
             else:
                 subject = f"Payment Confirmation - Company Booking #{company_booking_id}"
-                message = f"Hello {user.name},\n\nYour payment of {amount}€ for the booking of {company_booking.animal.name} with {company_booking.company.name} has been accepted.\n\nTransaction ID: {payment.transaction_id}\n\nThank you for using Pet at Work!"
+                message = f"Hello {user.name},\n\nYour payment of {total_amount}€ for the booking of {company_booking.animal.name} with {company_booking.company.name} has been accepted.\n\nTransaction ID: {payment.transaction_id}\n\nThank you for using Pet at Work!"
 
             try:
                 send_mail(

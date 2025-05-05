@@ -231,6 +231,22 @@
                   <i class="detail-icon" v-else-if="item.companyBooking.status === 'cancelled'">🚫</i>
                   <span class="status-text" :class="item.companyBooking.status">{{ getStatusLabel(item.companyBooking.status) }}</span>
                 </div>
+                
+                <!-- Payment status for company bookings -->
+                <div class="detail payment-status">
+                  <i class="detail-icon" v-if="item.companyBooking.company_paid">💰</i>
+                  <i class="detail-icon" v-else>🔄</i>
+                  <span :class="{ 'paid': item.companyBooking.company_paid }">
+                    {{ item.companyBooking.company_paid ? 'Payment completed' : 'Payment pending' }}
+                  </span>
+                </div>
+                
+                <div v-if="item.companyBooking.status === 'accepted' && !item.companyBooking.company_paid" class="booking-actions">
+                  <button class="payment-btn" @click="initiateCompanyPayment(item.companyBooking.id)">
+                    <i class="btn-icon">💳</i>
+                    Request payment
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -899,116 +915,74 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.petsitter-dashboard {
+/* Structure de base - identique à PetOwnerView */
+.view-container {
+  width: 100%;
+}
+
+.petsitter-dashboard, .public-view {
   width: 100%;
   max-width: var(--max-content-width);
   margin: 0 auto;
   padding: var(--space-xl);
 }
 
-.dashboard-header {
+/* Titre et navigation */
+h1, h2, h3 {
+  color: var(--color-heading);
+}
+
+.profile-nav {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-xl);
+  justify-content: flex-end;
+  margin-bottom: var(--space-lg);
 }
 
-.profile-header {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
-  margin-bottom: var(--space-xl);
-}
-
-.experience-section {
-  margin-top: var(--space-lg);
-  white-space: pre-line;
-  color: var(--color-text);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-lg);
-  margin: var(--space-lg) 0;
-}
-
-.stat-card {
-  background-color: var(--color-background);
-  padding: var(--space-lg);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-md);
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--color-primary);
-}
-
-.stat-label {
-  color: var(--color-text-light);
-  margin-top: var(--space-sm);
-}
-
-.companies-section {
-  margin-top: var(--space-xl);
-}
-
-.company-card {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
-  margin-bottom: var(--space-md);
+.profile-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
 }
 
-.company-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+.profile-btn:hover {
+  background-color: var(--color-primary-hover);
 }
 
-.loading, .empty-message {
-  text-align: center;
-  padding: var(--space-xl);
-  background-color: var(--color-background-mute);
-  border-radius: var(--border-radius-md);
-  margin: var(--space-xl) 0;
-  color: var(--color-text-light);
-}
-
-/* Styles for public view */
-.public-view {
-  width: 100%;
-  max-width: var(--max-content-width);
-  margin: 0 auto;
-  padding: var(--space-xl);
-}
-
-.login-prompt {
-  background-color: var(--color-background-soft);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
+/* Section Profil */
+.profile-section {
   margin-bottom: var(--space-xl);
-  text-align: center;
+  width: 100%;
 }
 
-.login-prompt a {
-  color: var(--color-primary);
-  font-weight: bold;
-  text-decoration: none;
-  transition: color var(--transition-speed);
+.profile-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
 }
 
-.login-prompt a:hover {
-  color: var(--color-primary-hover);
-  text-decoration: underline;
+.profile-info {
+  margin-bottom: var(--space-md);
 }
 
+.edit-profile-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+}
+
+/* Sections de réservations */
 .section-title {
   font-size: 1.75rem;
   margin-bottom: 1.5rem;
@@ -1028,6 +1002,12 @@ onMounted(async () => {
   border-radius: 2px;
 }
 
+.pending-bookings-section, .bookings-section, .linked-bookings-section, .companies-section {
+  margin-bottom: var(--space-xl);
+  width: 100%;
+}
+
+/* Grille de réservations - identique à PetOwnerView */
 .bookings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1035,6 +1015,7 @@ onMounted(async () => {
   margin-top: var(--space-md);
 }
 
+/* Cartes de réservation - identique à PetOwnerView */
 .booking-card {
   background-color: var(--color-background);
   border-radius: var(--border-radius-md);
@@ -1049,6 +1030,7 @@ onMounted(async () => {
   box-shadow: var(--shadow-lg);
 }
 
+/* Bannières de statut - identique à PetOwnerView */
 .booking-banner {
   height: 40px;
   position: relative;
@@ -1075,8 +1057,8 @@ onMounted(async () => {
   background-color: var(--color-text-light);
 }
 
-.booking-card.linked .booking-banner.special-banner {
-  background-color: #6d28d9;  /* Couleur violet pour les réservations liées */
+.booking-card.linked .booking-banner {
+  background-color: var(--color-primary);
 }
 
 .status-badge {
@@ -1087,6 +1069,7 @@ onMounted(async () => {
   border-radius: var(--border-radius-sm);
 }
 
+/* Contenu de la carte de réservation */
 .booking-content {
   padding: var(--space-md);
 }
@@ -1097,7 +1080,7 @@ onMounted(async () => {
   margin: var(--space-sm) 0;
 }
 
-.booking-avatar .avatar-image {
+.avatar-image {
   width: 50px;
   height: 50px;
   background-color: var(--color-primary-light, #e0f2fe);
@@ -1126,7 +1109,7 @@ onMounted(async () => {
 .detail {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   font-size: var(--font-size-sm);
 }
 
@@ -1134,28 +1117,22 @@ onMounted(async () => {
   font-size: 1.2rem;
 }
 
-.company-detail {
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px dashed var(--color-border);
-}
-
-.reservation-info {
+.booking-notes {
   background-color: var(--color-background-soft);
   padding: var(--space-sm);
   border-radius: var(--border-radius-sm);
-  margin-top: var(--space-md);
+  margin-bottom: var(--space-md);
   font-size: var(--font-size-sm);
 }
 
+/* Boutons d'action */
 .booking-actions {
   display: flex;
   gap: var(--space-sm);
   justify-content: center;
-  margin-top: var(--space-md);
 }
 
-.accept-btn, .refuse-btn {
+.accept-btn, .refuse-btn, .book-company-btn, .payment-btn {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -1165,30 +1142,6 @@ onMounted(async () => {
   font-weight: 600;
   cursor: pointer;
   transition: background-color var(--transition-speed);
-}
-
-.book-company-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
-  border: none;
-  border-radius: var(--border-radius-sm);
-  font-weight: 600;
-  cursor: pointer;
-  background-color: var(--color-primary);
-  color: white;
-  transition: background-color var(--transition-speed);
-}
-
-.book-company-btn:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-}
-
-.book-company-btn:disabled {
-  background-color: var(--color-text-light);
-  cursor: not-allowed;
 }
 
 .accept-btn {
@@ -1209,6 +1162,16 @@ onMounted(async () => {
   background-color: var(--color-danger-dark);
 }
 
+.book-company-btn, .payment-btn {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.book-company-btn:hover:not(:disabled), .payment-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+/* Texte de statut */
 .status-text {
   font-weight: 600;
 }
@@ -1225,17 +1188,37 @@ onMounted(async () => {
   color: var(--color-danger);
 }
 
+/* Message vide */
+.empty-message {
+  text-align: center;
+  padding: var(--space-lg);
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-xl);
+  width: 100%;
+}
+
 .empty-icon {
   font-size: 3rem;
   margin-bottom: var(--space-md);
-  color: var(--color-primary);
+  color: var(--color-text-light);
+}
+
+/* Section des compagnies */
+.companies-section {
+  width: 100%;
+}
+
+.section-description {
+  margin-bottom: var(--space-md);
+  color: var(--color-text-light);
 }
 
 .companies-list-vertical {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-lg);
-  margin-top: var(--space-md);
 }
 
 .company-card-vertical {
@@ -1253,101 +1236,235 @@ onMounted(async () => {
   box-shadow: var(--shadow-lg);
 }
 
+.company-info {
+  padding: var(--space-md);
+}
+
 .company-info h3 {
   margin-bottom: var(--space-sm);
-  color: var(--color-heading);
 }
 
 .capacity, .address {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
   color: var(--color-text-light);
-}
-
-.company-card-actions {
-  margin-top: var(--space-md);
 }
 
 .reservation-btn {
   background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--border-radius-sm);
-  font-weight: 600;
   cursor: pointer;
+  font-weight: 600;
   transition: background-color var(--transition-speed);
+  margin-top: var(--space-sm);
 }
 
 .reservation-btn:hover {
   background-color: var(--color-primary-hover);
 }
 
-.profile-card {
+/* Modales */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
   background-color: var(--color-background);
   border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
   padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
-  margin-bottom: var(--space-xl);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.profile-actions {
-  margin-top: var(--space-md);
+.modal-content h3 {
+  margin-bottom: var(--space-md);
+  text-align: center;
 }
 
-.edit-profile-btn {
-  background-color: var(--color-secondary);
+/* Formulaire de réservation */
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-weight: 500;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-background);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-lg);
+}
+
+.cancel-btn {
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
+}
+
+.submit-btn {
+  background-color: var(--color-primary);
   color: white;
+}
+
+.cancel-btn, .submit-btn {
   border: none;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--border-radius-sm);
+  cursor: pointer;
   font-weight: 600;
+  transition: background-color var(--transition-speed);
+}
+
+.submit-btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* Debug section */
+.debug-section {
+  margin: var(--space-md) 0;
+  padding: var(--space-sm);
+  border: 1px dashed #ccc;
+  border-radius: var(--border-radius-md);
+  text-align: center;
+}
+
+.debug-btn {
+  background-color: #f1f1f1;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: var(--space-xs) var(--space-sm);
+  margin: var(--space-xs);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.debug-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* Styles pour la réservation d'entreprise pour un animal spécifique */
+.companies-list-modal {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+}
+
+.company-item-modal {
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color var(--transition-speed);
 }
 
-.edit-profile-btn:hover {
-  background-color: var(--color-secondary-hover);
+.company-item-modal:last-child {
+  border-bottom: none;
 }
 
-.section-description {
-  margin-bottom: var(--space-lg);
-  color: var(--color-text-light);
+.company-item-modal:hover {
+  background-color: var(--color-background-soft);
 }
 
-.debug-btn {
-  background-color: #f5a623;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin-right: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.company-item-modal.selected {
+  background-color: var(--color-primary-light, rgba(52, 144, 220, 0.1));
+  border-left: 3px solid var(--color-primary);
 }
 
-.debug-btn:hover {
-  background-color: #e69319;
+.company-selection p {
+  margin-bottom: var(--space-sm);
+  font-weight: 500;
 }
 
+/* Responsive design */
 @media (max-width: 768px) {
-  .petsitter-dashboard {
+  .petsitter-dashboard, .public-view {
     padding: var(--space-md);
   }
   
-  .dashboard-header {
-    flex-direction: column;
-    gap: var(--space-md);
-    text-align: center;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
-  }
-
   .bookings-grid,
   .companies-list-vertical {
     grid-template-columns: 1fr;
   }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+}
+
+/* Style pour l'indicateur de chargement */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--color-primary);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--space-md);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Style pour les éléments spécifiques à PetSitterView */
+.payment-status {
+  margin-top: var(--space-xs);
+}
+
+.payment-status .paid {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.reservation-info {
+  background-color: var(--color-background-soft);
+  padding: var(--space-sm);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-sm);
 }
 </style>

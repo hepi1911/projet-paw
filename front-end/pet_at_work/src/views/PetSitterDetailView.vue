@@ -78,6 +78,8 @@
             <!-- Affichage du prix calculé -->
             <div v-if="totalDays > 0" class="price-calculation">
               <p><strong>Duration:</strong> {{ totalDays }} day{{ totalDays > 1 ? 's' : '' }}</p>
+              <p><strong>Base price:</strong> {{ baseTotalPrice }}£</p>
+              <p><strong>Service fee:</strong> 2.80£</p>
               <p class="total-price"><strong>Total price:</strong> {{ totalPrice }}£</p>
             </div>
             
@@ -209,6 +211,7 @@ const isProcessingPayment = ref(false);
 const isSubmitting = ref(false); // Ajout de l'état pour contrôler le bouton de réservation
 const createdBookingId = ref(null);
 const totalDays = ref(0);
+const baseTotalPrice = ref(0);
 const totalPrice = ref(0);
 const paymentMethod = ref('card');
 const paymentDetails = reactive({
@@ -247,6 +250,7 @@ const userHasRole = (role) => {
 const calculatePrice = () => {
   if (!booking.startDate || !booking.endDate) {
     totalDays.value = 0;
+    baseTotalPrice.value = 0;
     totalPrice.value = 0;
     return;
   }
@@ -257,6 +261,7 @@ const calculatePrice = () => {
   if (end < start) {
     bookingError.value = 'End date must be after start date';
     totalDays.value = 0;
+    baseTotalPrice.value = 0;
     totalPrice.value = 0;
     return;
   }
@@ -268,7 +273,9 @@ const calculatePrice = () => {
   
   totalDays.value = diffDays;
   // Fixed price of 10£ per day
-  totalPrice.value = diffDays * 10;
+  baseTotalPrice.value = diffDays * 10;
+  // Add service fee of 2.80£
+  totalPrice.value = baseTotalPrice.value + 2.80;
 };
 
 // Submit the booking
@@ -313,7 +320,7 @@ const submitBooking = async () => {
       end_date: booking.endDate,
       notes: booking.notes,
       status: 'pending',
-      price: totalPrice.value
+      price: totalPrice.value  // Le prix total qui inclut maintenant les frais de service
     };
     
     const response = await apiService.createBooking(bookingData);

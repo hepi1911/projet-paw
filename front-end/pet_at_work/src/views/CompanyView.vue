@@ -90,9 +90,22 @@
               <p><strong>Dates:</strong> {{ formatDate(booking.start_date) }} - {{ formatDate(booking.end_date) }}</p>
               <p><strong>Details:</strong> {{ booking.details || 'Aucun détail fourni' }}</p>
               <p class="status"><strong>Status:</strong> {{ getStatusLabel(booking.status) }}</p>
+              <p class="payment-status" v-if="booking.status === 'accepted'">
+                <strong>Payment:</strong> 
+                <span :class="booking.company_paid ? 'paid' : 'unpaid'">
+                  {{ booking.company_paid ? 'Completed' : 'Payment required' }}
+                </span>
+              </p>
               
-              <div class="booking-actions" v-if="booking.status === 'accepted'">
-                <!-- Le bouton "Marquer comme terminée" a été supprimé selon la demande -->
+              <div class="booking-actions" v-if="booking.status === 'accepted' && !booking.company_paid">
+                <button 
+                  class="payment-btn" 
+                  @click="initiatePayment(booking.id)"
+                  :disabled="isProcessingPayment"
+                >
+                  <i class="btn-icon">💳</i>
+                  {{ isUpdating === booking.id ? 'Processing...' : 'Make a payment' }}
+                </button>
               </div>
             </div>
           </div>
@@ -160,6 +173,67 @@
         </form>
       </div>
     </div>
+    
+    <!-- Modal de paiement -->
+    <div v-if="showPaymentModal" class="modal-backdrop" @click="showPaymentModal = false">
+      <div class="modal-content payment-modal" @click.stop>
+        <h3>Payment Confirmation</h3>
+        
+        <div v-if="currentPaymentBooking" class="payment-details">
+          <p class="payment-message">{{ currentPaymentBooking.details }}</p>
+          
+          <div class="payment-summary">
+            <div class="payment-item">
+              <span class="label">Service Amount:</span>
+              <span class="value">{{ currentPaymentBooking.amount.toFixed(2) }}€</span>
+            </div>
+            <div class="payment-item">
+              <span class="label">Service Fee:</span>
+              <span class="value">{{ currentPaymentBooking.serviceFee.toFixed(2) }}€</span>
+            </div>
+            <div class="payment-item total">
+              <span class="label">Total Amount:</span>
+              <span class="value">{{ currentPaymentBooking.totalAmount.toFixed(2) }}€</span>
+            </div>
+          </div>
+          
+          <div class="payment-method">
+            <h4>Payment Method</h4>
+            <div class="payment-options">
+              <label class="payment-option">
+                <input type="radio" v-model="paymentMethod" value="card" checked>
+                <span class="payment-option-label">Credit Card</span>
+              </label>
+              <label class="payment-option">
+                <input type="radio" v-model="paymentMethod" value="paypal">
+                <span class="payment-option-label">PayPal</span>
+              </label>
+              <label class="payment-option">
+                <input type="radio" v-model="paymentMethod" value="transfer">
+                <span class="payment-option-label">Bank Transfer</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" @click="showPaymentModal = false">Cancel</button>
+            <button 
+              type="button" 
+              class="pay-btn" 
+              @click="processPayment()"
+              :disabled="isProcessingPayment"
+            >
+              {{ isProcessingPayment ? 'Processing...' : 'Confirm Payment' }}
+            </button>
+          </div>
+        </div>
+        
+        <div v-else class="payment-error">
+          <p>Unable to process payment. Please try again.</p>
+          <button type="button" class="cancel-btn" @click="showPaymentModal = false">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -187,6 +261,10 @@ const profileForm = ref({
   newPassword: '',
   confirmPassword: ''
 });
+const currentPaymentBooking = ref(null);
+const showPaymentModal = ref(false);
+const paymentMethod = ref('card');
+const isProcessingPayment = ref(false);
 
 // Filtrer les réservations en attente
 const pendingBookings = computed(() => {
@@ -277,16 +355,29 @@ const updateBookingStatus = async (bookingId, newStatus) => {
     }
     
     // Mettre à jour le statut
-    await apiService.updatePetSitterCompanyBookingStatus(bookingId, newStatus);
+    const response = await apiService.updatePetSitterCompanyBookingStatus(bookingId, newStatus);
     
-    // Mettre à jour la réservation localement
-    const bookingIndex = bookings.value.findIndex(b => b.id === bookingId);
-    if (bookingIndex !== -1) {
-      bookings.value[bookingIndex].status = newStatus;
+    // Si la réponse indique qu'un paiement est nécessaire
+    if (response && response.requires_payment) {
+      // Stocker les informations de paiement et ouvrir le modal de paiement
+      currentPaymentBooking.value = {
+        id: bookingId,
+        amount: response.amount,
+        serviceFee: response.service_fee || 2.80,
+        totalAmount: response.total_amount || (response.amount + 2.80),
+        details: response.message || 'Paiement requis pour confirmer cette réservation'
+      };
+      showPaymentModal.value = true;
+    } else {
+      // Mettre à jour la réservation localement
+      const bookingIndex = bookings.value.findIndex(b => b.id === bookingId);
+      if (bookingIndex !== -1) {
+        bookings.value[bookingIndex].status = newStatus;
+      }
+      
+      // Afficher un message de confirmation
+      alert(`La réservation a été ${getStatusLabel(newStatus).toLowerCase()} avec succès !`);
     }
-    
-    // Afficher un message de confirmation
-    alert(`La réservation a été ${getStatusLabel(newStatus).toLowerCase()} avec succès !`);
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut de la réservation:', error);
     alert('Une erreur est survenue lors de la mise à jour du statut. Veuillez réessayer.');
@@ -415,6 +506,80 @@ const showNotification = (message) => {
   setTimeout(() => {
     showNotificationBar.value = false;
   }, 5000);
+};
+
+// Traiter le paiement
+const processPayment = async () => {
+  try {
+    if (!currentPaymentBooking.value) {
+      alert('Erreur: Informations de réservation manquantes');
+      return;
+    }
+
+    isProcessingPayment.value = true;
+    
+    // Appeler l'API pour traiter le paiement
+    const response = await apiService.processCompanyPayment(
+      currentPaymentBooking.value.id,
+      paymentMethod.value
+    );
+    
+    // Mettre à jour la réservation localement
+    const bookingIndex = bookings.value.findIndex(b => b.id === currentPaymentBooking.value.id);
+    if (bookingIndex !== -1) {
+      bookings.value[bookingIndex].status = 'accepted';
+    }
+    
+    // Fermer le modal et afficher un message de confirmation
+    showPaymentModal.value = false;
+    currentPaymentBooking.value = null;
+    
+    alert('Paiement traité avec succès ! La réservation est maintenant confirmée.');
+    
+    // Rafraîchir les données
+    await loadData();
+  } catch (error) {
+    console.error('Erreur lors du traitement du paiement:', error);
+    alert('Une erreur est survenue lors du traitement du paiement. Veuillez réessayer.');
+  } finally {
+    isProcessingPayment.value = false;
+  }
+};
+
+// Initialiser le paiement
+const initiatePayment = async (bookingId) => {
+  try {
+    isUpdating.value = bookingId;
+    const booking = bookings.value.find(b => b.id === bookingId);
+    
+    if (!booking) {
+      alert('Erreur: Réservation introuvable');
+      return;
+    }
+    
+    // Calculer le montant standard si non disponible
+    const amount = booking.service_cost || 50.0;
+    const serviceFee = 2.80;
+    const totalAmount = amount + serviceFee;
+    
+    // Préparer les informations pour le modal de paiement
+    currentPaymentBooking.value = {
+      id: bookingId,
+      amount: amount,
+      serviceFee: serviceFee,
+      totalAmount: totalAmount,
+      details: `Confirmation de paiement pour la réservation avec ${getPetSitterName(booking.petsitter)}`
+    };
+    
+    // Ouvrir le modal de paiement
+    showPaymentModal.value = true;
+    
+  } catch (error) {
+    console.error('Erreur lors de l\'initialisation du paiement:', error);
+    alert('Une erreur est survenue lors de l\'initialisation du paiement. Veuillez réessayer.');
+  } finally {
+    isUpdating.value = null;
+  }
 };
 
 // Charger les données au montage du composant
@@ -620,6 +785,21 @@ onMounted(async () => {
 
 .refuse-btn:hover, .delete-btn:hover {
   background-color: var(--color-danger-dark);
+}
+
+.payment-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed);
+}
+
+.payment-btn:hover {
+  background-color: var(--color-primary-hover);
 }
 
 button:disabled {

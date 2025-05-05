@@ -262,6 +262,16 @@ export const apiService = {
     return response.data
   },
   
+  async processCompanyPayment(bookingId, paymentData) {
+    const response = await api.post(`/company-bookings/${bookingId}/company_payment/`, paymentData)
+    return response.data
+  },
+  
+  async processSharedPayment(bookingId, paymentData) {
+    const response = await api.post(`/petsitter-company-bookings/${bookingId}/shared_payment/`, paymentData)
+    return response.data
+  },
+  
   async getMyPayments() {
     const response = await api.get('/payments/my_payments/')
     return response.data

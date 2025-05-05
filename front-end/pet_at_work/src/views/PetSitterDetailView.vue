@@ -86,7 +86,9 @@
               <textarea id="notes" v-model="booking.notes" rows="4"></textarea>
             </div>
             
-            <button type="submit" class="submit-btn">Book and pay</button>
+            <button type="submit" class="submit-btn" :disabled="isSubmitting">
+              {{ isSubmitting ? 'Réservation en cours...' : 'Book and pay' }}
+            </button>
           </form>
           
           <div v-if="bookingSuccess" class="success-message">
@@ -204,6 +206,7 @@ const bookingError = ref(null);
 const paymentSuccess = ref(false);
 const paymentError = ref(null);
 const isProcessingPayment = ref(false);
+const isSubmitting = ref(false); // Ajout de l'état pour contrôler le bouton de réservation
 const createdBookingId = ref(null);
 const totalDays = ref(0);
 const totalPrice = ref(0);
@@ -270,6 +273,8 @@ const calculatePrice = () => {
 
 // Submit the booking
 const submitBooking = async () => {
+  if (isSubmitting.value) return; // Éviter les soumissions multiples
+  
   if (!isLoggedIn.value) {
     goToLogin();
     return;
@@ -278,6 +283,26 @@ const submitBooking = async () => {
   try {
     if (!booking.animalId || !booking.startDate || !booking.endDate) {
       bookingError.value = 'Please fill in all required fields';
+      return;
+    }
+    
+    isSubmitting.value = true; // Activer l'état de chargement
+    
+    // Validation supplémentaire des dates
+    const startDate = new Date(booking.startDate);
+    const endDate = new Date(booking.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Réinitialiser l'heure pour comparer uniquement les dates
+    
+    if (startDate < today) {
+      bookingError.value = 'Start date cannot be in the past';
+      isSubmitting.value = false;
+      return;
+    }
+    
+    if (endDate < startDate) {
+      bookingError.value = 'End date must be after start date';
+      isSubmitting.value = false;
       return;
     }
     
@@ -298,7 +323,10 @@ const submitBooking = async () => {
     bookingError.value = null;
   } catch (error) {
     console.error('Error creating booking:', error);
-    bookingError.value = 'Failed to create booking. Please try again.';
+    // Afficher un message d'erreur plus spécifique basé sur la réponse du serveur
+    bookingError.value = error.response?.data?.error || 'Failed to create booking. Please try again.';
+  } finally {
+    isSubmitting.value = false; // Désactiver l'état de chargement
   }
 };
 

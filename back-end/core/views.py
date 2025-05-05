@@ -1081,9 +1081,15 @@ class PaymentViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Update booking status once payment is made
-                booking.status = 'paid'
-                booking.save()
+                # Mark as paid but preserve the original status for accept/refuse actions
+                # We'll track the payment status separately in the payment object
+                # This way, the booking status workflow can still function normally
+                
+                # Only update booking.status to 'paid' if it's already in 'accepted' status
+                # Keeping 'pending' status to allow for accept/refuse actions
+                if booking.status == 'accepted':
+                    booking.status = 'paid'
+                    booking.save()
                 
             elif company_booking_id:
                 company_booking = CompanyBooking.objects.get(id=company_booking_id)
@@ -1105,9 +1111,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Update booking status once payment is made
-                company_booking.status = 'paid'
-                company_booking.save()
+                # Only update to paid if already in accepted status
+                if company_booking.status == 'accepted':
+                    company_booking.status = 'paid'
+                    company_booking.save()
                 
         except (Booking.DoesNotExist, CompanyBooking.DoesNotExist):
             return Response(

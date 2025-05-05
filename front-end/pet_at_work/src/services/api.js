@@ -271,4 +271,28 @@ export const apiService = {
     const response = await api.get(`/payments/${id}/`)
     return response.data
   },
+
+  // Test functions 
+  async createTestPendingBooking(animalId, sitterId) {
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    
+    const bookingData = {
+      animal: animalId,
+      sitter: sitterId,
+      start_date: today.toISOString().split('T')[0],
+      end_date: nextWeek.toISOString().split('T')[0],
+    };
+    
+    try {
+      console.log('Creating test pending booking with:', bookingData);
+      const response = await api.post('/bookings/', bookingData);
+      console.log('Test booking created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating test booking:', error);
+      throw error;
+    }
+  },
 }

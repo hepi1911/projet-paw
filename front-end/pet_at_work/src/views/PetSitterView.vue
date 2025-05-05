@@ -49,6 +49,13 @@
       <!-- Navigation -->
       <div class="profile-nav">
         <button class="profile-btn" @click="goToProfile">See my profile</button>
+        
+        <!-- Debug buttons -->
+        <div class="debug-section" style="margin-top: 20px; padding: 10px; border: 1px dashed #ccc;">
+          <h3>Debug Tools</h3>
+          <button class="debug-btn" @click="createTestPendingBooking">Create Test Pending Booking</button>
+          <button class="debug-btn" @click="loadData">Reload All Data</button>
+        </div>
       </div>
 
       <!-- Section Mon Profil -->
@@ -478,10 +485,13 @@ const animalsWithCompanyBookings = ref({});
 
 // Calcul des réservations en attente
 const pendingBookings = computed(() => {
-  return bookings.value.filter(booking => booking.status === 'pending');
+  console.log("Calculating pending bookings. Total bookings:", bookings.value.length);
+  const pending = bookings.value.filter(booking => booking.status === 'pending');
+  console.log("Found pending bookings:", pending.length, pending);
+  return pending;
 });
 
-// Fonction pour charger les données - modifiée pour vérifier le statut de connexion
+// Fonction pour charger les données - modifiée pour mieux débugger
 const loadData = async () => {
   isLoading.value = true;
   error.value = null;
@@ -507,12 +517,18 @@ const loadData = async () => {
     
     // Récupérer les informations de l'utilisateur actuel
     currentUser.value = await apiService.getUserById(currentUserId);
-    console.log('Profil du pet sitter chargé:', currentUser.value);
+    console.log('Pet sitter profile loaded:', currentUser.value);
     
     // Récupérer les réservations du pet sitter
     const allBookings = await apiService.getAllBookings();
+    console.log('All bookings loaded:', allBookings);
+    
     bookings.value = allBookings.filter(booking => booking.sitter === currentUserId);
-    console.log('Réservations chargées:', bookings.value);
+    console.log('Filtered pet sitter bookings:', bookings.value);
+    
+    // Log des statuts des réservations pour le débogage
+    const bookingStatuses = bookings.value.map(b => ({ id: b.id, status: b.status }));
+    console.log('Booking statuses:', bookingStatuses);
     
     // Récupérer les informations des animaux pour l'affichage
     const animalIds = [...new Set(bookings.value.map(booking => booking.animal))];
@@ -576,8 +592,8 @@ const loadData = async () => {
       console.error('Erreur lors du chargement des réservations compagnies:', error);
     }
   } catch (err) {
-    error.value = 'Une erreur est survenue lors du chargement des données. Veuillez réessayer.';
-    console.error('Erreur lors du chargement des données:', err);
+    error.value = 'An error occurred while loading data. Please try again.';
+    console.error('Error loading data:', err);
   } finally {
     isLoading.value = false;
   }
@@ -604,21 +620,37 @@ const openProfileModal = () => {
   showProfileModal.value = true;
 };
 
-// Fonction pour mettre à jour le statut d'une réservation
+// Fonction pour mettre à jour le statut d'une réservation - amélioration du feedback
 const updateBookingStatus = async (bookingId, newStatus) => {
   try {
     isUpdating.value = bookingId;
+    console.log(`Updating booking ${bookingId} to status: ${newStatus}`);
+    
+    // Check if the booking is in 'paid' status and preserve payment information
+    const bookingIndex = bookings.value.findIndex(b => b.id === bookingId);
+    const isPaid = bookingIndex !== -1 && bookings.value[bookingIndex].payment_status === 'completed';
+    
     await apiService.updateBookingStatus(bookingId, newStatus);
     
-    const bookingIndex = bookings.value.findIndex(b => b.id === bookingId);
     if (bookingIndex !== -1) {
+      // Update the status while preserving payment information
       bookings.value[bookingIndex].status = newStatus;
+      
+      // If booking was paid, make sure we don't lose that information
+      if (isPaid) {
+        bookings.value[bookingIndex].payment_status = 'completed';
+      }
+      
+      console.log(`Booking status updated in UI to: ${newStatus}`);
     }
     
-    alert(`La réservation a été ${getStatusLabel(newStatus).toLowerCase()} avec succès !`);
+    alert(`The booking has been successfully ${getStatusLabel(newStatus).toLowerCase()}!`);
+    
+    // Reload data to ensure everything is up to date
+    await loadData();
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du statut de la réservation:', error);
-    alert('Une erreur est survenue lors de la mise à jour du statut. Veuillez réessayer.');
+    console.error('Error updating booking status:', error);
+    alert('An error occurred while updating the booking status. Please try again.');
   } finally {
     isUpdating.value = null;
   }
@@ -827,6 +859,37 @@ const getCompanyName = (companyId) => {
 // Rediriger vers la page de profil
 const goToProfile = () => {
   router.push('/profile');
+};
+
+// Ajouter une fonction de débogage pour créer une réservation en attente de test
+const createTestPendingBooking = async () => {
+  try {
+    // Get the first animal available in the system for testing
+    const allAnimals = await apiService.getAllAnimals();
+    console.log('Available animals for test:', allAnimals);
+    
+    if (allAnimals.length === 0) {
+      alert('No animals found for testing. Please add an animal first.');
+      return;
+    }
+    
+    // Use the first animal and the current user (pet sitter) for the test booking
+    const animalId = allAnimals[0].id;
+    const sitterId = currentUser.value.id;
+    
+    console.log(`Creating test booking with animal ID: ${animalId} and sitter ID: ${sitterId}`);
+    
+    // Create the test booking with pending status
+    const result = await apiService.createTestPendingBooking(animalId, sitterId);
+    
+    alert('Test pending booking created successfully!');
+    
+    // Reload data to see the new booking
+    await loadData();
+  } catch (error) {
+    console.error('Failed to create test booking:', error);
+    alert(`Error creating test booking: ${error.message}`);
+  }
 };
 
 // Charger les données au montage du composant
@@ -1249,6 +1312,21 @@ onMounted(async () => {
 .section-description {
   margin-bottom: var(--space-lg);
   color: var(--color-text-light);
+}
+
+.debug-btn {
+  background-color: #f5a623;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-right: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.debug-btn:hover {
+  background-color: #e69319;
 }
 
 @media (max-width: 768px) {

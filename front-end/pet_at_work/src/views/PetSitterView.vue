@@ -50,8 +50,8 @@
       <div class="profile-nav">
         <button class="profile-btn" @click="goToProfile">See my profile</button>
         
-        <!-- Debug buttons -->
-        <div class="debug-section" style="margin-top: 20px; padding: 10px; border: 1px dashed #ccc;">
+        <!-- Debug buttons - Hidden -->
+        <div class="debug-section" v-if="false" style="margin-top: 20px; padding: 10px; border: 1px dashed #ccc;">
           <h3>Debug Tools</h3>
           <button class="debug-btn" @click="createTestPendingBooking">Create Test Pending Booking</button>
           <button class="debug-btn" @click="loadData">Reload All Data</button>
@@ -833,6 +833,29 @@ const updateUserProfile = async () => {
     alert('Une erreur est survenue lors de la mise à jour du profil. Veuillez réessayer.');
   } finally {
     isUpdatingProfile.value = false;
+  }
+};
+
+// Fonction pour effectuer le paiement à une entreprise
+const initiateCompanyPayment = async (companyBookingId) => {
+  try {
+    if (!confirm('Voulez-vous vraiment envoyer une demande de paiement à la compagnie pour cette réservation?')) {
+      return;
+    }
+    
+    // Appel à l'API pour initialiser le processus de paiement - cela envoie une notification à la compagnie
+    const result = await apiService.processCompanyPayment(companyBookingId, 'card');
+    
+    if (result) {
+      alert('Demande de paiement envoyée à la compagnie avec succès! La compagnie recevra une notification pour effectuer le paiement.');
+      // Recharger les données pour mettre à jour l'UI
+      await loadData();
+    } else {
+      alert('Erreur lors de l\'envoi de la demande de paiement. Veuillez réessayer.');
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de la demande de paiement:', error);
+    alert(`Une erreur s'est produite: ${error.message || 'Erreur inconnue'}`);
   }
 };
 

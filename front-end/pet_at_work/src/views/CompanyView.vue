@@ -518,7 +518,7 @@ const processPayment = async () => {
 
     isProcessingPayment.value = true;
     
-    // Appeler l'API pour traiter le paiement
+    // Appeler l'API pour traiter le paiement en utilisant le service modifié
     const response = await apiService.processCompanyPayment(
       currentPaymentBooking.value.id,
       paymentMethod.value
@@ -528,6 +528,7 @@ const processPayment = async () => {
     const bookingIndex = bookings.value.findIndex(b => b.id === currentPaymentBooking.value.id);
     if (bookingIndex !== -1) {
       bookings.value[bookingIndex].status = 'accepted';
+      bookings.value[bookingIndex].company_paid = true;
     }
     
     // Fermer le modal et afficher un message de confirmation

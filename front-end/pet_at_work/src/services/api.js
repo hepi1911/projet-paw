@@ -262,9 +262,27 @@ export const apiService = {
     return response.data
   },
   
-  async processCompanyPayment(bookingId, paymentData) {
-    const response = await api.post(`/company-bookings/${bookingId}/company_payment/`, paymentData)
-    return response.data
+  async processCompanyPayment(bookingId, paymentType) {
+    try {
+      // Étape 1: initialisation du paiement pour obtenir les détails
+      const initResponse = await api.post(`/process-company-payment/${bookingId}/`, {
+        payment_stage: 'init'
+      });
+      
+      console.log('Initialisation du paiement:', initResponse.data);
+      
+      // Étape 2: traitement du paiement avec les informations de la carte
+      const processResponse = await api.post(`/process-company-payment/${bookingId}/`, {
+        payment_stage: 'process',
+        payment_type: paymentType
+      });
+      
+      console.log('Paiement traité avec succès:', processResponse.data);
+      return processResponse.data;
+    } catch (error) {
+      console.error('Erreur lors du traitement du paiement:', error);
+      throw error;
+    }
   },
   
   async processSharedPayment(bookingId, paymentData) {

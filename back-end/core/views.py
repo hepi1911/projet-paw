@@ -1932,3 +1932,83 @@ def debug_login(request):
         })
         response_data['error'] = f'Authentication error: {str(e)}'
         return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def process_company_payment(request, booking_id):
+    """
+    Traite un paiement d'une entreprise pour une réservation.
+    Une vue dédiée qui contourne le système d'actions de DRF.
+    Version simplifiée qui ignore certaines vérifications pour démonstration.
+    """
+    try:
+        # Récupérer la réservation
+        booking = CompanyBooking.objects.get(id=booking_id)
+        user = request.user
+        data = request.data.copy()
+        
+        # Vérifier le stade du paiement
+        payment_stage = data.get('payment_stage', 'init')
+        
+        # Si nous sommes à l'étape initiale, renvoyer les informations pour afficher le formulaire
+        if payment_stage == 'init':
+            # Calculer montant fictif pour démonstration
+            amount = booking.total_price if hasattr(booking, 'total_price') and booking.total_price else 50.0
+            service_fee = 2.80
+            total_amount = amount + service_fee
+            
+            return Response({
+                'booking_id': booking_id,
+                'amount': amount,
+                'service_fee': service_fee,
+                'total_amount': total_amount,
+                'payment_required': True,
+                'show_payment_form': True,  # Indication pour le frontend d'afficher le formulaire
+                'payment_type_options': ['card', 'paypal', 'bank_transfer'],
+                'payment_stage': 'form'
+            }, status=status.HTTP_200_OK)
+        
+        # Si nous sommes à l'étape de traitement du paiement
+        elif payment_stage == 'process':
+            # Calculer montant fictif pour démonstration
+            amount = booking.total_price if hasattr(booking, 'total_price') and booking.total_price else 50.0
+            service_fee = 2.80
+            total_amount = amount + service_fee
+            
+            # Créer paiement (simulé)
+            payment_data = {
+                'company_booking': booking.id,
+                'amount': total_amount,
+                'payment_status': 'completed',
+                'payment_type': data.get('payment_type', 'card'),
+                'transaction_id': f"TR-DEMO-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+            }
+            
+            payment_serializer = PaymentSerializer(data=payment_data)
+            if payment_serializer.is_valid():
+                payment = payment_serializer.save()
+                
+                # Mettre à jour le statut de la réservation
+                booking.company_paid = True
+                booking.status = 'accepted'  # Assurez-vous que le statut est mis à jour
+                booking.save()
+                
+                print(f"Paiement de démonstration traité pour la réservation {booking_id}")
+                
+                # Retourner une réponse de succès
+                return Response({
+                    'message': 'Paiement traité avec succès',
+                    'payment': payment_serializer.data,
+                    'booking': CompanyBookingSerializer(booking).data
+                }, status=status.HTTP_200_OK)
+            
+            return Response(payment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        else:
+            return Response({'error': 'Étape de paiement non reconnue'}, status=status.HTTP_400_BAD_REQUEST)
+            
+    except CompanyBooking.DoesNotExist:
+        return Response({'error': 'Réservation non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        print(f"Erreur lors du traitement du paiement: {str(e)}")
+        return Response({'error': f'Erreur lors du traitement du paiement: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

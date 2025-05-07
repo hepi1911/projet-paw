@@ -48,13 +48,13 @@
                   :class="['tab-btn', { active: activeTab === 'list' }]" 
                   @click="activeTab = 'list'"
                 >
-                  <i class="tab-icon">🐾</i> Mes animaux
+                  <i class="tab-icon">🐾</i> My animals
                 </button>
                 <button 
                   :class="['tab-btn', { active: activeTab === 'add' }]" 
                   @click="activeTab = 'add'"
                 >
-                  <i class="tab-icon">➕</i> Ajouter un animal
+                  <i class="tab-icon">➕</i> Add an animal
                 </button>
               </div>
               
@@ -118,21 +118,21 @@
                               @click="selectedAnimalType = 'dog'"
                             >
                               <span class="type-emoji">🐕</span>
-                              <span class="type-label">Chien</span>
+                              <span class="type-label">Dog</span>
                             </div>
                             <div 
                               :class="['type-option', { selected: selectedAnimalType === 'cat' }]"
                               @click="selectedAnimalType = 'cat'"
                             >
                               <span class="type-emoji">🐈</span>
-                              <span class="type-label">Chat</span>
+                              <span class="type-label">Cat</span>
                             </div>
                             <div 
                               :class="['type-option', { selected: selectedAnimalType === 'other' }]"
                               @click="selectedAnimalType = 'other'"
                             >
                               <span class="type-emoji">🐾</span>
-                              <span class="type-label">Autre</span>
+                              <span class="type-label">other</span>
                             </div>
                           </div>
                         </div>
@@ -204,7 +204,7 @@
                     <div class="no-animals-illustration">🐾</div>
                     <p class="no-animals-text">{{ $t('animals.no_animals') }}</p>
                     <button @click="activeTab = 'add'" class="add-first-animal-btn">
-                      <i class="btn-icon">➕</i> Ajouter votre premier animal
+                      <i class="btn-icon">➕</i> Add your first animal
                     </button>
                   </div>
                 </div>
@@ -344,7 +344,7 @@
                   <input 
                     type="text" 
                     v-model="searchQuery" 
-                    placeholder="Rechercher un pet sitter..." 
+                    placeholder="Find a pet sitter..." 
                     class="search-input"
                   />
                 </div>
@@ -368,13 +368,13 @@
                 :class="['view-btn', { active: viewType === 'grid' }]" 
                 @click="viewType = 'grid'"
               >
-                <span class="grid-icon">▥</span> Grille
+                <span class="grid-icon">▥</span> Grid
               </button>
               <button 
                 :class="['view-btn', { active: viewType === 'list' }]" 
                 @click="viewType = 'list'"
               >
-                <span class="list-icon">☰</span> Liste
+                <span class="list-icon">☰</span> List
               </button>
             </div>
             
@@ -414,10 +414,10 @@
                   
                   <div class="sitter-badges">
                     <span class="badge" v-if="sitter.capacity">
-                      <span class="badge-icon">🏠</span> {{ sitter.capacity }} animaux
+                      <span class="badge-icon">🏠</span> {{ sitter.capacity }} animals
                     </span>
                     <span class="badge verified">
-                      <span class="badge-icon">✓</span> Vérifié
+                      <span class="badge-icon">✓</span> Verified
                     </span>
                   </div>
                   
@@ -564,9 +564,9 @@ const activeTab = ref('list');
 const selectedAnimalType = ref(null);
 const viewType = ref('grid'); // 'grid' ou 'list'
 const filterTags = ref([
-  { label: 'Chiens', value: 'dogs' },
-  { label: 'Chats', value: 'cats' },
-  { label: 'À domicile', value: 'home' }
+  { label: 'Dogs', value: 'dogs' },
+  { label: 'Cats', value: 'cats' },
+  { label: 'At home', value: 'home' }
 ]);
 const selectedTags = ref([]);
 const currentPage = ref(1);

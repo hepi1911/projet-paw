@@ -16,9 +16,9 @@
       <label for="experience">Minimum experience (years) :</label>
       <select id="experience" v-model="filters.experience" @change="updateFilters">
         <option value="">Tous</option>
-        <option value="1">1+ an</option>
-        <option value="2">2+ ans</option>
-        <option value="5">5+ ans</option>
+        <option value="1">1+ years</option>
+        <option value="2">2+ years</option>
+        <option value="5">5+ years</option>
       </select>
     </div>
 

@@ -1993,11 +1993,11 @@ def process_company_payment(request, booking_id):
                 booking.status = 'accepted'  # Assurez-vous que le statut est mis à jour
                 booking.save()
                 
-                print(f"Paiement de démonstration traité pour la réservation {booking_id}")
+                print(f"Demo payment processed for booking {booking_id}")
                 
                 # Retourner une réponse de succès
                 return Response({
-                    'message': 'Paiement traité avec succès',
+                    'message': 'Payment processed successfully',
                     'payment': payment_serializer.data,
                     'booking': CompanyBookingSerializer(booking).data
                 }, status=status.HTTP_200_OK)
@@ -2005,10 +2005,10 @@ def process_company_payment(request, booking_id):
             return Response(payment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         else:
-            return Response({'error': 'Étape de paiement non reconnue'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Payment step not recognized'}, status=status.HTTP_400_BAD_REQUEST)
             
     except CompanyBooking.DoesNotExist:
-        return Response({'error': 'Réservation non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Reservation not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        print(f"Erreur lors du traitement du paiement: {str(e)}")
-        return Response({'error': f'Erreur lors du traitement du paiement: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        print(f"Error processing payment: {str(e)}")
+        return Response({'error': f'Error processing payment: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

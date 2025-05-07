@@ -25,8 +25,8 @@ class AnimalSerializer(serializers.ModelSerializer):
         model = Animal
         fields = '__all__'
         extra_kwargs = {
-            'name': {'required': True, 'error_messages': {'required': 'Le nom de l\'animal est obligatoire'}},
-            'owner': {'required': True, 'error_messages': {'required': 'Le propriétaire est obligatoire'}},
+            'name': {'required': True, 'error_messages': {'required': 'The animal\'s name is mandatory'}},
+            'owner': {'required': True, 'error_messages': {'required': 'Owner is required'}},
             'breed': {'required': False},
             'age': {'required': False},
             'maladie': {'required': False}

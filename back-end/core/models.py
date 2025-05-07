@@ -14,11 +14,11 @@ class CustomUserManager(BaseUserManager):
         Creates and saves a new user with the given email, name, role and password.
         """
         if not email:
-            raise ValueError('L\'email est obligatoire')
+            raise ValueError('Email is required')
         if not name:
-            raise ValueError('Le nom est obligatoire')
+            raise ValueError('Name is required')
         if not role:
-            raise ValueError('Le rôle est obligatoire')
+            raise ValueError('The role is mandatory')
 
         email = self.normalize_email(email)
         user = self.model(email=email, name=name, role=role, **extra_fields)
@@ -38,9 +38,9 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         if not extra_fields.get('is_staff'):
-            raise ValueError('Le superuser doit avoir is_staff=True')
+            raise ValueError('The superuser must have is_staff=True')
         if not extra_fields.get('is_superuser'):
-            raise ValueError('Le superuser doit avoir is_superuser=True')
+            raise ValueError('The superuser must have is_superuser=True')
 
         return self.create_user(email, name, role, password, **extra_fields)
 
@@ -151,7 +151,7 @@ class Animal(models.Model):
     animal_type = models.CharField(max_length=10, choices=ANIMAL_TYPE_CHOICES, default='dog')
     breed = models.CharField(max_length=100, default="Non spécifiée")
     age = models.CharField(max_length=50, default="Non spécifié")
-    maladie = models.CharField(max_length=200, null=True, blank=True, default="Aucune maladie connue")
+    maladie = models.CharField(max_length=200, null=True, blank=True, default="No known illnesses")
 
     def __str__(self):
         """

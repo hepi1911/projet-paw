@@ -116,11 +116,11 @@
               <div class="booking-actions">
                 <button class="accept-btn" @click="updateBookingStatus(booking.id, 'accepted')" :disabled="isUpdating">
                   <i class="btn-icon">✅</i>
-                  {{ isUpdating === booking.id ? 'En cours...' : 'Accepter' }}
+                  {{ isUpdating === booking.id ? 'In court...' : 'Accept' }}
                 </button>
                 <button class="refuse-btn" @click="updateBookingStatus(booking.id, 'refused')" :disabled="isUpdating">
                   <i class="btn-icon">❌</i>
-                  {{ isUpdating === booking.id ? 'En cours...' : 'Refuser' }}
+                  {{ isUpdating === booking.id ? 'In court...' : 'Refuse' }}
                 </button>
               </div>
             </div>
@@ -174,10 +174,10 @@
                   class="book-company-btn" 
                   @click="bookCompanyForAnimal(booking)" 
                   :disabled="animalsWithCompanyBookings[booking.animal]"
-                  :title="animalsWithCompanyBookings[booking.animal] ? 'Cet animal a déjà une réservation auprès d\'une entreprise' : ''"
+                  :title="animalsWithCompanyBookings[booking.animal] ? 'This animal already has a reservation with a company' : ''"
                 >
                   <i class="btn-icon">🏢</i>
-                  {{ animalsWithCompanyBookings[booking.animal] ? 'Déjà réservé' : 'Réserver pour cet animal' }}
+                  {{ animalsWithCompanyBookings[booking.animal] ? 'Already booked' : 'Reserve for this animal' }}
                 </button>
               </div>
               
@@ -310,13 +310,13 @@
           <div class="form-group">
             <label for="details">Further details</label>
             <textarea id="details" v-model="newReservation.details" 
-                      placeholder="Précisez vos besoins et attentes pour ce service"></textarea>
+                      placeholder="Specify your needs and expectations for this service"></textarea>
           </div>
           
           <div class="form-actions">
             <button type="button" class="cancel-btn" @click="closeModal">Cancel</button>
             <button type="submit" class="submit-btn" :disabled="isSubmittingReservation">
-              {{ isSubmittingReservation ? 'Création en cours...' : 'Créer la réservation' }}
+              {{ isSubmittingReservation ? 'Creation in progress...' : 'Create the reservation' }}
             </button>
           </div>
         </form>
@@ -374,7 +374,7 @@
           <div class="form-actions">
             <button type="button" class="cancel-btn" @click="showProfileModal = false">Cancel</button>
             <button type="submit" class="submit-btn" :disabled="isUpdatingProfile">
-              {{ isUpdatingProfile ? 'Mise à jour en cours...' : 'Mettre à jour' }}
+              {{ isUpdatingProfile ? 'Update in progress...' : 'To update' }}
             </button>
           </div>
         </form>
@@ -398,7 +398,7 @@
             @click="selectedCompanyId = company.id"
           >
             <h4>{{ company.name }}</h4>
-            <p>{{ company.address || 'Adresse non disponible' }}</p>
+            <p>{{ company.address || 'Address not available' }}</p>
             <p>Capacity: {{ company.capacity || 'N/A' }}</p>
           </div>
         </div>
@@ -442,14 +442,14 @@
           <textarea 
             id="details-animal" 
             v-model="companyReservationForm.details" 
-            placeholder="Précisez vos besoins..."
+            placeholder="Specify your needs..."
           ></textarea>
         </div>
         
         <div class="form-actions">
           <button type="button" class="cancel-btn" @click="cancelCompanyReservation">Cancel</button>
           <button type="submit" class="submit-btn" :disabled="isReserving">
-            {{ isReserving ? 'Création en cours...' : 'Créer la réservation' }}
+            {{ isReserving ? 'Creation in progress...' : 'Create the reservation' }}
           </button>
         </div>
       </form>
@@ -567,7 +567,7 @@ const loadData = async () => {
           });
         }
       } catch (error) {
-        console.error('Erreur lors de la récupération des informations de l\'animal ou du propriétaire:', error);
+        console.error('Create the reservation', error);
       }
     }
     
@@ -605,7 +605,7 @@ const loadData = async () => {
         })
         .filter(item => item !== null);
     } catch (error) {
-      console.error('Erreur lors du chargement des réservations compagnies:', error);
+      console.error('Error loading airline reservations:', error);
     }
   } catch (err) {
     error.value = 'An error occurred while loading data. Please try again.';
@@ -700,7 +700,7 @@ const createCompanyReservation = async () => {
     const endDate = new Date(newReservation.value.end_date);
     
     if (endDate < startDate) {
-      alert('La date de fin doit être postérieure à la date de début');
+      alert('The end date must be later than the start date');
       isSubmittingReservation.value = false;
       return;
     }
@@ -714,10 +714,10 @@ const createCompanyReservation = async () => {
     });
     
     closeModal();
-    alert('Votre réservation a été envoyée avec succès !');
+    alert('Your reservation has been sent successfully. !');
   } catch (error) {
-    console.error('Erreur lors de la création de la réservation:', error);
-    alert('Une erreur est survenue lors de la création de la réservation. Veuillez réessayer.');
+    console.error('Error creating reservation:', error);
+    alert('An error occurred while creating the reservation. Please try again.');
   } finally {
     isSubmittingReservation.value = false;
   }
@@ -731,7 +731,7 @@ const bookCompanyForAnimal = (booking) => {
     service_type: 'collaboration',
     start_date: booking.start_date,
     end_date: booking.end_date,
-    details: `Réservation liée à la garde de l'animal ${getAnimalName(booking.animal)}`
+    details: `Reservation related to the care of the animal ${getAnimalName(booking.animal)}`
   };
   
   showCompanyReservationModal.value = true;
@@ -741,7 +741,7 @@ const bookCompanyForAnimal = (booking) => {
 const submitCompanyReservation = async () => {
   try {
     if (!selectedBooking.value || !selectedCompanyId.value) {
-      alert('Veuillez sélectionner une entreprise.');
+      alert('Please select a company.');
       return;
     }
     
@@ -759,12 +759,12 @@ const submitCompanyReservation = async () => {
     });
     
     cancelCompanyReservation();
-    alert('Votre réservation a été envoyée à l\'entreprise avec succès !');
+    alert('Your reservation has been successfully sent to the company!');
     
     await loadData();
   } catch (error) {
-    console.error('Erreur lors de la création de la réservation:', error);
-    alert('Une erreur est survenue lors de la création de la réservation.');
+    console.error('Error creating reservation:', error);
+    alert('An error occurred while creating the reservation.');
   } finally {
     isReserving.value = false;
   }
@@ -790,13 +790,13 @@ const updateUserProfile = async () => {
     
     if (profileForm.value.newPassword) {
       if (profileForm.value.newPassword !== profileForm.value.confirmPassword) {
-        alert('Les nouveaux mots de passe ne correspondent pas.');
+        alert('The new passwords do not match.');
         isUpdatingProfile.value = false;
         return;
       }
       
       if (!profileForm.value.currentPassword) {
-        alert('Veuillez entrer votre mot de passe actuel pour confirmer le changement.');
+        alert('Please enter your current password to confirm the change.');
         isUpdatingProfile.value = false;
         return;
       }
@@ -827,10 +827,10 @@ const updateUserProfile = async () => {
     };
     
     showProfileModal.value = false;
-    alert('Votre profil a été mis à jour avec succès !');
+    alert('Your profile has been successfully updated. !');
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du profil:', error);
-    alert('Une erreur est survenue lors de la mise à jour du profil. Veuillez réessayer.');
+    console.error('Error updating profile:', error);
+    alert('An error occurred while updating your profile. Please try again..');
   } finally {
     isUpdatingProfile.value = false;
   }
@@ -839,7 +839,7 @@ const updateUserProfile = async () => {
 // Fonction pour effectuer le paiement à une entreprise
 const initiateCompanyPayment = async (companyBookingId) => {
   try {
-    if (!confirm('Voulez-vous vraiment envoyer une demande de paiement à la compagnie pour cette réservation?')) {
+    if (!confirm('Are you sure you want to send a payment request to the company for this booking?')) {
       return;
     }
     
@@ -847,15 +847,15 @@ const initiateCompanyPayment = async (companyBookingId) => {
     const result = await apiService.processCompanyPayment(companyBookingId, 'card');
     
     if (result) {
-      alert('Demande de paiement envoyée à la compagnie avec succès! La compagnie recevra une notification pour effectuer le paiement.');
+      alert('Payment request successfully sent to the company! The company will receive a notification to complete the payment.');
       // Recharger les données pour mettre à jour l'UI
       await loadData();
     } else {
-      alert('Erreur lors de l\'envoi de la demande de paiement. Veuillez réessayer.');
+      alert('Error sending payment request. Please try again.');
     }
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de la demande de paiement:', error);
-    alert(`Une erreur s'est produite: ${error.message || 'Erreur inconnue'}`);
+    console.error('Error sending payment request:', error);
+    alert(`An error has occurred: ${error.message || 'Erreur inconnue'}`);
   }
 };
 

@@ -134,7 +134,7 @@ const checkUserAndRedirect = () => {
           break;
       }
     } catch (error) {
-      console.error('Erreur lors de la vérification des données utilisateur:', error);
+      console.error('Error verifying user data:', error);
     }
   }
 };

@@ -33,7 +33,7 @@
               </ul>
               
               <h2>Availability</h2>
-              <p>{{ sitter.availability || 'Disponible tous les jours' }}</p>
+              <p>{{ sitter.availability || 'Available every day' }}</p>
               
               <div class="ratings">
                 <h2>Ratings</h2>

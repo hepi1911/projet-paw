@@ -81,7 +81,7 @@
             id="experience" 
             v-model="formData.experience" 
             required
-            placeholder="Décrivez votre expérience avec les animaux"></textarea>
+            placeholder="Describe your experience with animals"></textarea>
         </div>
 
         <div v-if="formData.role === 'company'" class="form-group">
@@ -92,7 +92,7 @@
             v-model="formData.capacity" 
             required
             min="1"
-            placeholder="Nombre d'animaux">
+            placeholder="Number of animals">
         </div>
 
         <div v-if="error" class="error-message">
@@ -100,7 +100,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary" :disabled="isLoading">
-          <span v-if="isLoading">Inscription en cours...</span>
+          <span v-if="isLoading">Registration in progress...</span>
           <span v-else>{{ $t('auth.register') }}</span>
           <div class="arrow-wrapper">
             <div class="arrow"></div>
@@ -166,8 +166,8 @@ const passwordMatchMessage = computed(() =>
   !confirmPassword.value 
     ? '' 
     : passwordsMatch.value 
-      ? 'Les mots de passe correspondent' 
-      : 'Les mots de passe ne correspondent pas'
+      ? 'The passwords match' 
+      : 'Passwords do not match'
 )
 
 const validatePassword = () => {
@@ -186,13 +186,13 @@ const handleRegister = async () => {
   
   // Validate password requirements
   if (!passwordValid.value) {
-    error.value = 'Votre mot de passe ne répond pas aux exigences'
+    error.value = 'Your password does not meet the requirements'
     return
   }
   
   // Validate password matching
   if (!passwordsMatch.value) {
-    error.value = 'Les mots de passe ne correspondent pas'
+    error.value = 'Passwords do not match'
     return
   }
   
@@ -221,12 +221,12 @@ const handleRegister = async () => {
       dataToSend.capacity = formData.value.capacity;
     }
     
-    console.log('Données d\'inscription préparées:', dataToSend);
+    console.log('Prepared registration data:', dataToSend);
     await auth.register(dataToSend)
     registrationComplete.value = true // Mark registration as complete
   } catch (err) {
-    console.error('Erreur capturée dans le composant:', err);
-    error.value = err.message || 'Une erreur est survenue lors de l\'inscription'
+    console.error('Error caught in component:', err);
+    error.value = err.message || 'An error occurred during registration'
   } finally {
     isLoading.value = false
   }

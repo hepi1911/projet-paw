@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
         sessionStorage.removeItem('token')
       }
     } catch (e) {
-      console.error('Erreur lors de la restauration de l\'authentification:', e)
+      console.error('Error restoring authentication:', e)
       user.value = null
       isAuthenticated.value = false
       sessionStorage.removeItem('user')
@@ -48,7 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // S'assurer que response.user existe et contient les données nécessaires
       if (!response.user) {
-        throw new Error('Les données utilisateur sont manquantes dans la réponse')
+        throw new Error('User data is missing in the response')
       }
 
       // Mettre à jour l'état
@@ -67,34 +67,34 @@ export const useAuthStore = defineStore('auth', () => {
         role: user.value.role
       }
     } catch (error) {
-      console.error('Erreur de connexion:', error)
+      console.error('Connection error:', error)
       // Nettoyer l'état en cas d'erreur
       user.value = null
       isAuthenticated.value = false
       sessionStorage.removeItem('user')
       sessionStorage.removeItem('token')
       
-      return { success: false, error: error.message || 'Email ou mot de passe incorrect' }
+      return { success: false, error: error.message || 'Incorrect email or password' }
     }
   }
   
 
   const register = async (userData) => {
     try {
-      console.log('Début du processus d\'inscription', userData);
+      console.log('Start of the registration process', userData);
       const response = await apiService.register(userData);
-      console.log('Inscription réussie:', response);
+      console.log('Successful registration:', response);
       // Nous ne connectons pas automatiquement l'utilisateur, 
       // il devra se connecter manuellement après l'inscription
       return { success: true, data: response };
     } catch (error) {
-      console.error('Erreur d\'inscription:', error);
+      console.error('Registration error:', error);
       // Extraction du message d'erreur à partir de la réponse d'erreur axios
-      let errorMessage = 'Erreur lors de l\'inscription';
+      let errorMessage = 'Error during registration';
       
       if (error.response) {
         // Le serveur a répondu avec un statut d'erreur
-        console.error('Erreur du serveur:', error.response.data);
+        console.error('Registration error:', error.response.data);
         if (error.response.data.error) {
           errorMessage = error.response.data.error;
         } else if (typeof error.response.data === 'string') {

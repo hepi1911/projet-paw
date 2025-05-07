@@ -26,7 +26,7 @@ api.interceptors.response.use(
     
     // Si l'erreur est 401 (non autorisé) et que nous n'avons pas déjà tenté de rafraîchir le token
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
-      console.error('Erreur d\'authentification 401:', error.response.data);
+      console.error('401 Authentication Error:', error.response.data);
       
       // Marquer la requête comme ayant été retentée
       originalRequest._retry = true;
@@ -34,7 +34,7 @@ api.interceptors.response.use(
       // Vérifier si le token est stocké
       const token = sessionStorage.getItem('token');
       if (token) {
-        console.log('Un token existe, mais a été rejeté. Tentative de reconnexion...');
+        console.log('A token exists, but has been rejected. Attempting to reconnect...');
         
         // Ici, nous pourrions implémenter une logique pour rafraîchir le token
         // Pour l'instant, nous allons juste vider les informations d'authentification
@@ -61,7 +61,7 @@ export const apiService = {
       
       // Vérifier que la réponse contient les données nécessaires
       if (!response.data || !response.data.access || !response.data.user_id) {
-        throw new Error('Réponse invalide du serveur')
+        throw new Error('Invalid response from the server')
       }
       
       // Stocker le token dans sessionStorage
@@ -87,18 +87,18 @@ export const apiService = {
         user: userData
       }
     } catch (error) {
-      console.error('Erreur de connexion dans api.js:', error)
+      console.error('Connection error in api.js:', error)
       if (error.response && error.response.status === 401) {
-        throw new Error('Email ou mot de passe incorrect')
+        throw new Error('Incorrect email or password')
       }
       throw error
     }
   },
   
   async register(userData) {
-    console.log('Envoi des données d\'inscription:', userData)
+    console.log('Sending registration data:', userData)
     const response = await api.post('/register/', userData)
-    console.log('Réponse du serveur:', response.data)
+    console.log('Server response:', response.data)
     return response.data
   },
 
@@ -277,10 +277,10 @@ export const apiService = {
         payment_type: paymentType
       });
       
-      console.log('Paiement traité avec succès:', processResponse.data);
+      console.log('Phave successfully treated:', processResponse.data);
       return processResponse.data;
     } catch (error) {
-      console.error('Erreur lors du traitement du paiement:', error);
+      console.error('Error processing payment:', error);
       throw error;
     }
   },

@@ -110,14 +110,14 @@ onMounted(async () => {
     const currentUserId = userData.user_id;
     
     if (!currentUserId) {
-      console.error('Utilisateur non connecté ou ID non disponible');
+      console.error('User not logged in or ID not available');
       router.push('/login');
       return;
     }
     
     // Vérifier le rôle de l'utilisateur
     if (userData.role !== 'petsitter') {
-      console.error('Cette page est réservée aux pet sitters');
+      console.error('This page is reserved for pet sitters');
       router.push('/');
       return;
     }
@@ -128,8 +128,8 @@ onMounted(async () => {
     
     loading.value = false;
   } catch (err) {
-    console.error('Erreur lors du chargement des données:', err);
-    error.value = 'Impossible de charger les informations de l\'entreprise. Veuillez réessayer plus tard.';
+    console.error('Error loading data:', err);
+    error.value = 'Unable to load company information. Please try again later.';
     loading.value = false;
   }
 });
@@ -144,12 +144,12 @@ async function submitReservation() {
     const today = new Date();
 
     if (start < today) {
-      reservationError.value = "La date de début ne peut pas être dans le passé";
+      reservationError.value = "The start date cannot be in the past";
       return;
     }
 
     if (end <= start) {
-      reservationError.value = "La date de fin doit être après la date de début";
+      reservationError.value = "The end date must be after the start date";
       return;
     }
 
@@ -158,7 +158,7 @@ async function submitReservation() {
     const currentUserId = userData.user_id;
     
     if (!currentUserId) {
-      reservationError.value = "Vous devez être connecté pour effectuer une réservation";
+      reservationError.value = "You must be logged in to make a reservation.";
       router.push('/login');
       return;
     }
@@ -194,8 +194,8 @@ async function submitReservation() {
     }, 3000);
     
   } catch (err) {
-    console.error('Erreur lors de la réservation:', err);
-    reservationError.value = "Une erreur s'est produite lors de la réservation. Veuillez réessayer.";
+    console.error('Error while booking:', err);
+    reservationError.value = "An error occurred during booking. Please try again.";
   } finally {
     isSubmitting.value = false;
   }

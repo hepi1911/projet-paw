@@ -42,7 +42,7 @@
             <input type="password" id="newPassword" v-model="form.newPassword"
                    :disabled="!form.currentPassword"
                    pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
-                   title="Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial">
+                   title="Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character">
           </div>
 
           <div class="form-group">
@@ -86,17 +86,17 @@ export default {
         // Vérifier la concordance des mots de passe uniquement si un nouveau mot de passe est fourni
         if (form.value.newPassword) {
           if (form.value.newPassword !== form.value.confirmPassword) {
-            alert('Les mots de passe ne correspondent pas')
+            alert('Passwords do not match')
             return
           }
           if (!/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(form.value.newPassword)) {
-            alert('Le mot de passe ne respecte pas les critères de sécurité')
+            alert('The password does not meet the security criteria')
             return
           }
           
           // Vérifier que le mot de passe actuel est bien renseigné
           if (!form.value.currentPassword) {
-            alert('Veuillez entrer votre mot de passe actuel pour confirmer le changement')
+            alert('Please enter your current password to confirm the change.')
             return
           }
         }
@@ -117,7 +117,7 @@ export default {
 
         const response = await apiService.updateProfile(userData)
         authStore.setUser(response)
-        alert('Profil mis à jour avec succès')
+        alert(' Profile updated successfully')
 
         // Réinitialiser les champs de mot de passe
         form.value.currentPassword = ''
@@ -125,9 +125,9 @@ export default {
         form.value.confirmPassword = ''
       } catch (error) {
         if (error.response?.status === 400) {
-          alert(error.response.data.error || 'Erreur lors de la mise à jour du profil')
+          alert(error.response.data.error || 'Error updating profile')
         } else {
-          alert('Une erreur est survenue')
+          alert('An error has occurred')
         }
       }
     }

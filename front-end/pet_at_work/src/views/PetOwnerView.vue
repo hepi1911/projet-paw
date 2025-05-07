@@ -139,7 +139,7 @@
                       </div>
                       
                       <div class="form-group wide">
-                        <label for="animal-maladie">{{ $t('petowner.medical_conditions') }}</label>
+                        <label for="animal-disease">{{ $t('petowner.medical_conditions') }}</label>
                         <div class="input-container textarea-container">
                           <i class="input-icon">🏥</i>
                           <textarea 
@@ -291,7 +291,7 @@
                   <div class="booking-details">
                     <div class="detail">
                       <i class="detail-icon">👤</i>
-                      <span>{{ getOwnerName(booking.animal_owner) || 'Propriétaire inconnu' }}</span>
+                      <span>{{ getOwnerName(booking.animal_owner) || 'Unknown owner' }}</span>
                     </div>
                     <div class="detail">
                       <i class="detail-icon">🗓️</i>
@@ -313,11 +313,11 @@
                   <div v-if="booking.status === 'pending'" class="booking-actions">
                     <button class="accept-btn" @click="updateBookingStatus(booking.id, 'accepted')" :disabled="isUpdating">
                       <i class="btn-icon">✅</i>
-                      {{ isUpdating === booking.id ? 'En cours...' : 'Accepter' }}
+                      {{ isUpdating === booking.id ? 'In progress...' : ' Accept' }}
                     </button>
                     <button class="refuse-btn" @click="updateBookingStatus(booking.id, 'refused')" :disabled="isUpdating">
                       <i class="btn-icon">❌</i>
-                      {{ isUpdating === booking.id ? 'En cours...' : 'Refuser' }}
+                      {{ isUpdating === booking.id ? 'In progress...' : 'Refused' }}
                     </button>
                   </div>
                 </div>
@@ -328,8 +328,8 @@
           <!-- Message si aucune réservation -->
           <div v-if="isLoggedIn && ((viewMode === 'owner' && ownerBookings.length === 0) || (viewMode === 'sitter' && sitterBookings.length === 0))" class="no-bookings-message">
             <div class="no-bookings-icon">📅</div>
-            <h3>Aucune réservation</h3>
-            <p>Vous n'avez pas encore de réservations à afficher.</p>
+            <h3>No reservations</h3>
+            <p>You don't have any bookings to display yet.</p>
           </div>
 
           <!-- Section Pet Sitters - Visible pour tous les utilisateurs -->
@@ -381,8 +381,8 @@
             <!-- Message si aucun pet sitter trouvé -->
             <div v-if="filteredPetSitters.length === 0" class="no-results">
               <div class="no-results-icon">🔎</div>
-              <h3>Aucun résultat trouvé</h3>
-              <p>Aucun pet sitter ne correspond à votre recherche. Essayez d'autres critères.</p>
+              <h3>No results found</h3>
+              <p>No pet sitters match your search. Try different criteria.</p>
             </div>
             
             <!-- Affichage en grille -->
@@ -657,7 +657,7 @@ const addAnimal = async () => {
     // Afficher un message de succès
     alert(t('petowner.animal_added_success'));
   } catch (error) {
-    console.error('Erreur lors de l\'ajout de l\'animal:', error);
+    console.error('Error adding animal:', error);
     alert(t('petowner.animal_add_error'));
   } finally {
     isSubmitting.value = false;
@@ -680,7 +680,7 @@ const deleteBooking = async (bookingId) => {
     ownerBookings.value = ownerBookings.value.filter(booking => booking.id !== bookingId);
     alert(t('petowner.booking_cancelled_success'));
   } catch (error) {
-    console.error('Erreur lors de la suppression de la réservation:', error);
+    console.error('Error deleting reservation:', error);
     alert(t('petowner.booking_cancel_error'));
   } finally {
     isDeleting.value = null;
@@ -700,10 +700,10 @@ const updateBookingStatus = async (bookingId, newStatus) => {
     }
     
     // Afficher un message de confirmation
-    alert(`La réservation a été ${getStatusLabel(newStatus).toLowerCase()} avec succès !`);
+    alert(`The reservation was ${getStatusLabel(newStatus).toLowerCase()} successfully !`);
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du statut de la réservation:', error);
-    alert('Une erreur est survenue lors de la mise à jour du statut. Veuillez réessayer.');
+    console.error('Error updating reservation status:', error);
+    alert('An error occurred while updating the status. Please try again.');
   } finally {
     isUpdating.value = null;
   }
@@ -723,7 +723,7 @@ const getOwnerInfo = async (animalId) => {
     }
     return null;
   } catch (error) {
-    console.error('Erreur lors de la récupération des informations du propriétaire:', error);
+    console.error('Error retrieving owner information:', error);
     return null;
   }
 };
@@ -791,7 +791,7 @@ onMounted(async () => {
                 booking.animal_owner = await getOwnerInfo(booking.animal);
               }
             } catch (error) {
-              console.error('Erreur lors de la récupération des informations:', error);
+              console.error('Error retrieving information:', error);
             }
           }
         }
@@ -803,7 +803,7 @@ onMounted(async () => {
       }
     }
   } catch (error) {
-    console.error('Erreur lors du chargement des données:', error);
+    console.error('Error loading data:', error);
   }
 });
 
@@ -821,15 +821,15 @@ const formatDate = (dateString) => {
 };
 
 const getAnimalName = (animalId) => {
-  return animalCache.value[animalId] || 'Animal inconnu';
+  return animalCache.value[animalId] || 'Unknown animal';
 };
 
 const getSitterName = (sitterId) => {
-  return sitterCache.value[sitterId] || 'Pet sitter inconnu';
+  return sitterCache.value[sitterId] || 'Unknown Pet sitter';
 };
 
 const getOwnerName = (ownerId) => {
-  return ownerCache.value[ownerId] || 'Propriétaire inconnu';
+  return ownerCache.value[ownerId] || 'Unknown owner';
 };
 
 const getStatusLabel = (status) => {
@@ -863,7 +863,7 @@ const getAnimalBreed = (animalId) => {
     // Si l'animal n'est pas trouvé, retourner une valeur par défaut
     return '';
   } catch (error) {
-    console.error('Error l\'animal:', error);
+    console.error('Error animal:', error);
     return '';
   }
 };
@@ -903,7 +903,7 @@ const getRandomColor = (id) => {
 };
 
 const getRandomTags = (id) => {
-  const tags = ['Chiens', 'Chats', 'À domicile', 'Promenade', 'Garde de nuit'];
+  const tags = ['Dogs', 'Cats', 'At home', 'Walk', 'Night guard'];
   return tags.slice(0, (id % tags.length) + 1);
 };
 

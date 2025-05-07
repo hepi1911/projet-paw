@@ -1,8 +1,8 @@
 <template>
   <div class="filter-container">
-    <h3>Filtrer les résultats</h3>
+    <h3>Filter results</h3>
     <div class="filter-group">
-      <label for="search">Recherche par nom :</label>
+      <label for="search">Search by name :</label>
       <input 
         type="text" 
         id="search" 
@@ -13,7 +13,7 @@
     </div>
 
     <div class="filter-group">
-      <label for="experience">Expérience minimale (années) :</label>
+      <label for="experience">Minimum experience (years) :</label>
       <select id="experience" v-model="filters.experience" @change="updateFilters">
         <option value="">Tous</option>
         <option value="1">1+ an</option>
@@ -23,7 +23,7 @@
     </div>
 
     <div class="filter-group">
-      <label for="location">Localisation :</label>
+      <label for="location">Location :</label>
       <input 
         type="text" 
         id="location" 
@@ -36,25 +36,25 @@
     <div class="filter-group">
       <label for="service">Service :</label>
       <select id="service" v-model="filters.service" @change="updateFilters">
-        <option value="">Tous les services</option>
-        <option value="garde">Garde à domicile</option>
-        <option value="promenade">Promenade</option>
-        <option value="visite">Visite à domicile</option>
+        <option value="">All services</option>
+        <option value="garde">Home care</option>
+        <option value="promenade">Ride</option>
+        <option value="visite">Home visit</option>
       </select>
     </div>
 
     <div class="filter-group">
-      <label for="rating">Avis minimum :</label>
+      <label for="rating">Minimum notice :</label>
       <select id="rating" v-model="filters.rating" @change="updateFilters">
         <option value="">Tous</option>
-        <option value="3">3+ étoiles</option>
-        <option value="4">4+ étoiles</option>
-        <option value="5">5 étoiles</option>
+        <option value="3">3+ stars</option>
+        <option value="4">4+ stars</option>
+        <option value="5">5 stars</option>
       </select>
     </div>
 
     <button class="reset-button" @click="resetFilters">
-      Réinitialiser les filtres
+      Reset filters
     </button>
   </div>
 </template>

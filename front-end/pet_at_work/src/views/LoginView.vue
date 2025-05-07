@@ -20,7 +20,7 @@
             id="password" 
             v-model="password" 
             required
-            placeholder="Votre mot de passe">
+            placeholder="Your password">
         </div>
 
         <div v-if="errorMessage" class="error-message">
@@ -74,11 +74,11 @@ const handleLogin = async () => {
       const redirectPath = router.currentRoute.value.query.redirect || getDefaultRedirect(result.role)
       router.push(redirectPath)
     } else {
-      errorMessage.value = result.error || 'Une erreur est survenue lors de la connexion'
+      errorMessage.value = result.error || 'An error occurred while connecting'
     }
   } catch (error) {
     console.error('Erreur de connexion:', error)
-    errorMessage.value = error.message || 'Une erreur est survenue lors de la connexion'
+    errorMessage.value = error.message || 'An error occurred while connecting'
   } finally {
     loading.value = false
   }

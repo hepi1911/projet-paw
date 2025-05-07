@@ -12,7 +12,7 @@
             id="email" 
             v-model="email" 
             required
-            placeholder="votre@email.com">
+            placeholder="your@email.com">
         </div>
 
         <div v-if="error" class="error-message">
@@ -20,7 +20,7 @@
         </div>
 
         <button type="submit" class="submit-button" :disabled="loading">
-          {{ loading ? 'Envoi...' : 'Envoyer le code' }}
+          {{ loading ? 'Sending...' : 'Send code' }}
         </button>
 
         <p class="login-link">
@@ -42,7 +42,7 @@
             id="code" 
             v-model="verificationCode" 
             required
-            placeholder="Entrez le code reçu"
+            placeholder="Enter the code received"
             pattern="[0-9]{6}"
             maxlength="6">
         </div>
@@ -52,7 +52,7 @@
         </div>
 
         <button type="submit" class="submit-button" :disabled="loading">
-          {{ loading ? 'Vérification...' : 'Vérifier le code' }}
+          {{ loading ? 'Verification...' : 'Check code' }}
         </button>
 
         <button type="button" class="resend-button" @click="handleResendCode" :disabled="loading">
@@ -70,7 +70,7 @@
             v-model="newPassword"
             required
             @input="validatePassword"
-            placeholder="Nouveau mot de passe">
+            placeholder="New Password">
           <ul class="password-requirements" :class="{ valid: passwordValid }">
             <li :class="{ met: passwordLength }">At least 8 characters</li>
             <li :class="{ met: hasUpperCase }">At least one upper case letter</li>
@@ -87,7 +87,7 @@
             v-model="confirmPassword"
             required
             @input="validatePasswordMatch"
-            placeholder="Confirmez le nouveau mot de passe">
+            placeholder="Confirm the new password">
           <p class="password-match" :class="{ error: !passwordsMatch && confirmPassword }">
             {{ passwordMatchMessage }}
           </p>
@@ -98,7 +98,7 @@
         </div>
 
         <button type="submit" class="submit-button" :disabled="loading">
-          {{ loading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe' }}
+          {{ loading ? 'Réinitialisation...' : 'Reset password' }}
         </button>
       </form>
     </div>
@@ -139,7 +139,7 @@ const passwordsMatch = computed(() =>
 
 const passwordMatchMessage = computed(() => {
   if (!confirmPassword.value) return ''
-  return passwordsMatch.value ? 'Les mots de passe correspondent' : 'Les mots de passe ne correspondent pas'
+  return passwordsMatch.value ? 'Passwords match': 'Passwords do not match'
 })
 
 const handleEmailSubmit = async () => {
@@ -150,7 +150,7 @@ const handleEmailSubmit = async () => {
     await apiService.requestPasswordReset(email.value)
     step.value = 'verify'
   } catch (err) {
-    error.value = 'Impossible d\'envoyer le code de vérification. Vérifiez votre email.'
+    error.value = 'Unable to send verification code. Check your email.'
   } finally {
     loading.value = false
   }
@@ -164,7 +164,7 @@ const handleCodeSubmit = async () => {
     await apiService.verifyResetCode(email.value, verificationCode.value)
     step.value = 'reset'
   } catch (err) {
-    error.value = 'Code de vérification invalide'
+    error.value = 'Invalid verification code'
   } finally {
     loading.value = false
   }
@@ -176,9 +176,9 @@ const handleResendCode = async () => {
 
   try {
     await apiService.requestPasswordReset(email.value)
-    error.value = 'Un nouveau code a été envoyé'
+    error.value = 'A new code has been sent'
   } catch (err) {
-    error.value = 'Impossible d\'envoyer le code de vérification'
+    error.value = 'Unable to send verification code'
   } finally {
     loading.value = false
   }
@@ -186,12 +186,12 @@ const handleResendCode = async () => {
 
 const handlePasswordReset = async () => {
   if (!passwordValid.value) {
-    error.value = 'Le mot de passe ne respecte pas les critères de sécurité'
+    error.value = 'The password does not meet the security criteria'
     return
   }
 
   if (!passwordsMatch.value) {
-    error.value = 'Les mots de passe ne correspondent pas'
+    error.value = 'Passwords do not match'
     return
   }
 
@@ -200,10 +200,10 @@ const handlePasswordReset = async () => {
 
   try {
     await apiService.resetPassword(email.value, verificationCode.value, newPassword.value)
-    alert('Votre mot de passe a été réinitialisé avec succès')
+    alert('Your password has been successfully reset.')
     router.push('/login')
   } catch (err) {
-    error.value = 'Erreur lors de la réinitialisation du mot de passe'
+    error.value = 'Error resetting password'
   } finally {
     loading.value = false
   }

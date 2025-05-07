@@ -41,7 +41,7 @@ export function requireRole(requiredRole) {
         }
       }
     } catch (error) {
-      console.error('Erreur lors de la vérification du rôle:', error);
+      console.error('Error verifying role:', error);
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
       return next({ name: 'Login' });
@@ -92,7 +92,7 @@ export function redirectLoggedIn(to, from, next) {
           return next();
       }
     } catch (error) {
-      console.error('Erreur lors de la redirection:', error);
+      console.error('Error while redirecting:', error);
       return next();
     }
   }

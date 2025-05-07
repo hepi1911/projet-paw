@@ -20,7 +20,7 @@
         <div class="company-info-card">
           <div class="company-details">
             <h3>{{ currentCompany.name }}</h3>
-            <p><strong>Address:</strong> {{ currentCompany.address || 'Non spécifiée' }}</p>
+            <p><strong>Address:</strong> {{ currentCompany.address || 'Not specified' }}</p>
             <p class="capacity-info">
               <strong>Capacity:</strong> {{ currentCompany.capacity || 0 }} pets
               <span v-if="currentCapacityUsed > 0" class="capacity-used">
@@ -56,16 +56,16 @@
                   class="accept-btn" 
                   @click="updateBookingStatus(booking.id, 'accepted')" 
                   :disabled="isUpdating === booking.id || isCapacityFull"
-                  :title="isCapacityFull ? 'Capacité maximale atteinte' : ''"
+                  :title="isCapacityFull ? 'Maximum capacity reached' : ''"
                 >
-                  {{ isUpdating === booking.id ? 'En cours...' : 'Accepter' }}
+                  {{ isUpdating === booking.id ? 'In progress...' : 'Accept' }}
                 </button>
                 <button 
                   class="refuse-btn" 
                   @click="updateBookingStatus(booking.id, 'refused')" 
                   :disabled="isUpdating === booking.id"
                 >
-                  {{ isUpdating === booking.id ? 'En cours...' : 'Refuser' }}
+                  {{ isUpdating === booking.id ? 'In progress...' : 'Refuse' }}
                 </button>
               </div>
             </div>
@@ -167,7 +167,7 @@
           <div class="form-actions">
             <button type="button" class="cancel-btn" @click="showProfileModal = false">Cancel</button>
             <button type="submit" class="submit-btn" :disabled="isUpdatingProfile">
-              {{ isUpdatingProfile ? 'Mise à jour en cours...' : 'Mettre à jour' }}
+              {{ isUpdatingProfile ? 'Update in progress...' : 'To update' }}
             </button>
           </div>
         </form>
@@ -308,7 +308,7 @@ const loadData = async () => {
     const currentUserId = userData.user_id;
     
     if (!currentUserId) {
-      console.error('Utilisateur non connecté');
+      console.error('User not logged in');
       router.push('/login');
       return;
     }
@@ -326,7 +326,7 @@ const loadData = async () => {
           const petSitter = await apiService.getUserById(booking.petsitter);
           petSitterCache.value[booking.petsitter] = petSitter;
         } catch (error) {
-          console.error('Erreur lors de la récupération des informations du pet sitter:', error);
+          console.error('Error retrieving pet sitter information:', error);
         }
       }
     }
@@ -334,10 +334,10 @@ const loadData = async () => {
     // Vérifier s'il y a de nouvelles demandes et afficher une notification
     const pendingCount = pendingBookings.value.length;
     if (pendingCount > 0) {
-      showNotification(`Vous avez ${pendingCount} nouvelle(s) demande(s) de réservation en attente.`);
+      showNotification(`You have ${pendingCount} new reservation request(s) pending.`);
     }
   } catch (error) {
-    console.error('Erreur lors du chargement des données:', error);
+    console.error('Error loading data:', error);
   } finally {
     loading.value = false;
   }
@@ -350,7 +350,7 @@ const updateBookingStatus = async (bookingId, newStatus) => {
     
     // Si la compagnie est à capacité maximale et qu'on tente d'accepter, empêcher l'action
     if (newStatus === 'accepted' && isCapacityFull.value) {
-      alert('Impossible d\'accepter cette réservation : capacité maximale atteinte.');
+      alert('Unable to accept this reservation: maximum capacity reached.');
       return;
     }
     
@@ -365,7 +365,7 @@ const updateBookingStatus = async (bookingId, newStatus) => {
         amount: response.amount,
         serviceFee: response.service_fee || 2.80,
         totalAmount: response.total_amount || (response.amount + 2.80),
-        details: response.message || 'Paiement requis pour confirmer cette réservation'
+        details: response.message || 'Payment required to confirm this reservation'
       };
       showPaymentModal.value = true;
     } else {
@@ -376,11 +376,11 @@ const updateBookingStatus = async (bookingId, newStatus) => {
       }
       
       // Afficher un message de confirmation
-      alert(`La réservation a été ${getStatusLabel(newStatus).toLowerCase()} avec succès !`);
+      alert(`The reservation was ${getStatusLabel(newStatus).toLowerCase()} successfully!`);
     }
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du statut de la réservation:', error);
-    alert('Une erreur est survenue lors de la mise à jour du statut. Veuillez réessayer.');
+    console.error('Error updating reservation status:', error);
+    alert('An error occurred while updating the status. Please try again.');
   } finally {
     isUpdating.value = null;
   }
@@ -410,14 +410,14 @@ const updateCompanyProfile = async () => {
     // Valider les mots de passe uniquement si un nouveau mot de passe est fourni
     if (profileForm.value.newPassword) {
       if (profileForm.value.newPassword !== profileForm.value.confirmPassword) {
-        alert('Les nouveaux mots de passe ne correspondent pas.');
+        alert('The new passwords do not match.');
         isUpdatingProfile.value = false;
         return;
       }
       
       // Vérifier que le mot de passe actuel est bien renseigné
       if (!profileForm.value.currentPassword) {
-        alert('Veuillez entrer votre mot de passe actuel pour confirmer le changement.');
+        alert('Please enter your current password to confirm the change.');
         isUpdatingProfile.value = false;
         return;
       }
@@ -451,10 +451,10 @@ const updateCompanyProfile = async () => {
     
     // Fermer la modal et afficher un message de confirmation
     showProfileModal.value = false;
-    alert('Votre profil d\'entreprise a été mis à jour avec succès !');
+    alert('Your business profile has been successfully updated!');
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du profil:', error);
-    alert('Une erreur est survenue lors de la mise à jour du profil. Veuillez réessayer.');
+    console.error('Error updating profile:', error);
+    alert('An error occurred while updating your profile. Please try again.');
   } finally {
     isUpdatingProfile.value = false;
   }
@@ -512,7 +512,7 @@ const showNotification = (message) => {
 const processPayment = async () => {
   try {
     if (!currentPaymentBooking.value) {
-      alert('Erreur: Informations de réservation manquantes');
+      alert('Error: Missing reservation information');
       return;
     }
 
@@ -535,13 +535,13 @@ const processPayment = async () => {
     showPaymentModal.value = false;
     currentPaymentBooking.value = null;
     
-    alert('Paiement traité avec succès ! La réservation est maintenant confirmée.');
+    alert('Payment processed successfully! The reservation is now confirmed.');
     
     // Rafraîchir les données
     await loadData();
   } catch (error) {
-    console.error('Erreur lors du traitement du paiement:', error);
-    alert('Une erreur est survenue lors du traitement du paiement. Veuillez réessayer.');
+    console.error('Error processing payment:', error);
+    alert('An error occurred while processing your payment. Please try again.');
   } finally {
     isProcessingPayment.value = false;
   }
@@ -554,7 +554,7 @@ const initiatePayment = async (bookingId) => {
     const booking = bookings.value.find(b => b.id === bookingId);
     
     if (!booking) {
-      alert('Erreur: Réservation introuvable');
+      alert('Error: Reservation not found');
       return;
     }
     
@@ -569,15 +569,15 @@ const initiatePayment = async (bookingId) => {
       amount: amount,
       serviceFee: serviceFee,
       totalAmount: totalAmount,
-      details: `Confirmation de paiement pour la réservation avec ${getPetSitterName(booking.petsitter)}`
+      details: `Confirmation of payment for the reservation with${getPetSitterName(booking.petsitter)}`
     };
     
     // Ouvrir le modal de paiement
     showPaymentModal.value = true;
     
   } catch (error) {
-    console.error('Erreur lors de l\'initialisation du paiement:', error);
-    alert('Une erreur est survenue lors de l\'initialisation du paiement. Veuillez réessayer.');
+    console.error('Error initializing payment:', error);
+    alert('An error occurred while initializing the payment. Please try again.');
   } finally {
     isUpdating.value = null;
   }
